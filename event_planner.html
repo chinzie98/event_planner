@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vacation Planner</title>
+    <link rel="stylesheet" href="vacay.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Vacation Planner</h1>
+        <p>Choose one of the options below to plan your vacation:</p>
+
+        <div class="options">
+            <div class="option">
+                <label for="location">Preferred Location:</label>
+                <input type="text" id="location" placeholder="Enter a city or country">
+                <button onclick="planVacation('location')">Plan Trip</button>
+            </div>
+
+            <div class="option">
+                <label for="budget">Budget Amount ($):</label>
+                <input type="number" id="budget" placeholder="Enter your budget">
+                <button onclick="planVacation('budget')">Plan Trip</button>
+            </div>
+
+            <div class="option">
+                <button class="surprise" onclick="planVacation('surprise')">Surprise Me!</button>
+            </div>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script src="avaction.js"></script>
+</body>
+</html>
