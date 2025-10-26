@@ -1,35 +1,36 @@
-import express from 'express';
-import cors from 'cors';
-import OpenAI from 'openai';
+import express from "express";
+import cors from "cors";
+import OpenAI from "openai";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
-app.post('/plan-trip', async (req, res) => {
-    const { budget } = req.body;
+app.post("/plan-trip", async (req, res) => {
+  const { budget } = req.body;
 
-    if (!budget || budget <= 0) {
-        return res.status(400).json({ error: 'Enter a valid budget' });
-    }
+  if (!budget) {
+    return res.status(400).json({ error: "Budget is required" });
+  }
 
-    try {
-        const response = await openai.chat.completions.create({
-            model: "gpt-4",
-            messages: [
-                { role: "system", content: "You are a travel planner for budget-conscious travelers." },
-                { role: "user", content: `Suggest 5 vacation destinations for a budget of $${budget}. Include rough cost estimates and tips.` }
-            ]
-        });
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are a helpful travel planner." },
+        { role: "user", content: `Suggest 5 vacation destinations for a budget of $${budget}.` }
+      ]
+    });
 
-        const suggestions = response.choices[0].message.content;
-        res.json({ suggestions });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to generate travel ideas' });
-    }
+    res.json({ suggestions: completion.choices[0].message.content });
+  } catch (error) {
+    console.error("Error in OpenAI request:", error);
+    res.status(500).json({ error: "Failed to generate travel suggestions" });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
