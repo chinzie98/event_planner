@@ -1,32 +1,57 @@
-function planVacation(option) {
-    const resultDiv = document.getElementById('result');
-    let message = '';
+const SERVER_URL = "http://localhost:3000";
 
-    if(option === 'location') {
-        const location = document.getElementById('location').value.trim();
-        if(location) {
-            message = `Great choice! You could plan a wonderful trip to ${location}. 🌴✈️`;
-        } else {
-            message = 'Please enter a location first!';
-        }
-    } else if(option === 'budget') {
-        const budget = document.getElementById('budget').value;
-        if(budget && budget > 0) {
-            if(budget < 500) {
-                message = `With $${budget}, you might enjoy a cozy weekend getaway nearby. 🏕️`;
-            } else if(budget < 1500) {
-                message = `With $${budget}, a domestic trip or a short international trip is perfect! 🌍`;
-            } else {
-                message = `Wow! With $${budget}, you could plan a luxury vacation anywhere in the world! 🏖️`;
-            }
-        } else {
-            message = 'Please enter a valid budget amount!';
-        }
-    } else if(option === 'surprise') {
-        const destinations = ['Paris, France', 'Tokyo, Japan', 'Bali, Indonesia', 'New York, USA', 'Sydney, Australia'];
-        const randomDestination = destinations[Math.floor(Math.random() * destinations.length)];
-        message = `Surprise! How about visiting ${randomDestination}? 🎉✈️`;
+async function planVacation(option) {
+  const resultDiv = document.getElementById("result");
+
+  // Build the request body based on which option was chosen
+  let body = { option };
+
+  if (option === "location") {
+    const location = document.getElementById("location").value.trim();
+    if (!location) {
+      showResult("Please enter a destination first.");
+      return;
+    }
+    body.location = location;
+
+  } else if (option === "budget") {
+    const budget = document.getElementById("budget").value;
+    if (!budget || budget <= 0) {
+      showResult("Please enter a valid budget amount.");
+      return;
+    }
+    body.budget = budget;
+  }
+
+  // Show a loading state while we wait for the server
+  showResult("Finding the perfect trip for you…", true);
+
+  try {
+    const response = await fetch(`${SERVER_URL}/plan-trip`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      showResult(err.error || "Something went wrong. Please try again.");
+      return;
     }
 
-    resultDiv.textContent = message;
+    const data = await response.json();
+    showResult(data.suggestions);
+
+  } catch (error) {
+    console.error("Request failed:", error);
+    showResult("Could not reach the server. Make sure it's running.");
+  }
+}
+
+function showResult(message, isLoading = false) {
+  const resultDiv = document.getElementById("result");
+  resultDiv.innerHTML = isLoading
+    ? `<span class="loading">${message}</span>`
+    : message;
+  resultDiv.classList.add("visible");
 }
