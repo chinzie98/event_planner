@@ -17,37 +17,68 @@
   <div class="container">
     <p class="eyebrow">Your next adventure</p>
     <h1>Vacation<br><em>Planner</em></h1>
-    <p class="subtitle">Tell us where you dream of going, what you can spend, or let fate decide.</p>
+    <p class="subtitle">Tell us where you're headed, your budget, and when you're going — and we'll craft your perfect itinerary.</p>
 
-    <div class="options">
+    <div class="form">
 
-      <div class="option">
-        <p class="option-label">By destination</p>
-        <div class="input-row">
-          <input type="text" id="location" placeholder="City, country, or region…">
-          <button onclick="planVacation('location')">Plan trip</button>
+      <!-- Location -->
+      <div class="field">
+        <label class="field-label" for="location">Destination</label>
+        <input type="text" id="location" placeholder="City, country, or region…">
+      </div>
+
+      <!-- Budget -->
+      <div class="field">
+        <label class="field-label" for="budget">Budget (USD)</label>
+        <input type="number" id="budget" placeholder="Enter your total budget…">
+      </div>
+
+      <!-- Date Range -->
+      <div class="field">
+        <label class="field-label">Travel dates</label>
+        <div class="date-input-row" id="date-trigger">
+          <svg class="cal-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="4" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M2 8h16" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M6 2v4M14 2v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <span id="date-display">Select dates…</span>
         </div>
       </div>
 
-      <div class="divider">or</div>
-
-      <div class="option">
-        <p class="option-label">By budget</p>
-        <div class="input-row">
-          <input type="number" id="budget" placeholder="Your budget in USD…">
-          <button onclick="planVacation('budget')">Plan trip</button>
+      <!-- Calendar Popup -->
+      <div class="calendar-popup" id="calendar-popup">
+        <div class="calendar-header">
+          <button class="cal-nav" id="prev-month">&#8249;</button>
+          <span class="cal-month-label" id="month-label"></span>
+          <button class="cal-nav" id="next-month">&#8250;</button>
+        </div>
+        <div class="calendar-grid">
+          <div class="cal-day-name">Su</div>
+          <div class="cal-day-name">Mo</div>
+          <div class="cal-day-name">Tu</div>
+          <div class="cal-day-name">We</div>
+          <div class="cal-day-name">Th</div>
+          <div class="cal-day-name">Fr</div>
+          <div class="cal-day-name">Sa</div>
+        </div>
+        <div class="calendar-days" id="calendar-days"></div>
+        <div class="calendar-footer">
+          <span id="cal-selection-hint">Select a start date</span>
+          <button class="cal-clear" id="cal-clear">Clear</button>
         </div>
       </div>
 
-      <div class="divider">or</div>
-
-      <div class="option option-surprise" onclick="planVacation('surprise')">
-        <p class="surprise-title">Surprise me</p>
-        <p class="surprise-sub">Let us pick the perfect trip for you</p>
-      </div>
+      <button class="plan-btn" onclick="planVacation()">
+        Plan my trip
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
 
     </div>
 
+    <!-- Result -->
     <div id="result"></div>
   </div>
 

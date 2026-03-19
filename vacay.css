@@ -1,11 +1,15 @@
-/* ── Reset ── */
+/* =====================
+   Reset
+   ===================== */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* ── Page ── */
+/* =====================
+   Page & Background
+   ===================== */
 body {
   font-family: 'DM Sans', sans-serif;
   min-height: 100vh;
@@ -14,10 +18,10 @@ body {
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  padding: 2rem 0;
 }
 
-/* ── Background glow orbs ── */
 .bg-orb {
   position: absolute;
   border-radius: 50%;
@@ -42,7 +46,9 @@ body {
   left: -80px;
 }
 
-/* ── Main container ── */
+/* =====================
+   Main Container
+   ===================== */
 .container {
   position: relative;
   z-index: 1;
@@ -51,7 +57,9 @@ body {
   padding: 3rem 2rem;
 }
 
-/* ── Header ── */
+/* =====================
+   Header
+   ===================== */
 .eyebrow {
   font-size: 11px;
   font-weight: 500;
@@ -83,55 +91,43 @@ h1 em {
   margin-bottom: 2.5rem;
 }
 
-/* ── Option cards ── */
-.options {
+/* =====================
+   Form
+   ===================== */
+.form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  position: relative;
 }
 
-.option {
-  background: rgba(255, 255, 255, 0.05);
-  border: 0.5px solid rgba(255, 160, 60, 0.25);
-  border-radius: 16px;
-  padding: 1.25rem 1.5rem;
-  transition: background 0.2s, border-color 0.2s;
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.option:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 160, 60, 0.45);
-}
-
-.option-label {
+.field-label {
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 160, 60, 0.7);
-  margin-bottom: 0.6rem;
-}
-
-/* ── Input rows ── */
-.input-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
 }
 
 input[type="text"],
 input[type="number"] {
-  flex: 1;
   background: rgba(0, 0, 0, 0.3);
   border: 0.5px solid rgba(255, 160, 60, 0.3);
   border-radius: 10px;
-  padding: 0.65rem 1rem;
+  padding: 0.75rem 1rem;
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   font-weight: 300;
   color: #fff5eb;
   outline: none;
   transition: border-color 0.2s;
+  width: 100%;
 }
 
 input::placeholder {
@@ -142,85 +138,311 @@ input:focus {
   border-color: rgba(255, 160, 60, 0.7);
 }
 
-/* ── Buttons ── */
-button {
+/* =====================
+   Date Input Row
+   ===================== */
+.date-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 0.5px solid rgba(255, 160, 60, 0.3);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  user-select: none;
+}
+
+.date-input-row:hover {
+  border-color: rgba(255, 160, 60, 0.6);
+}
+
+.date-input-row.active {
+  border-color: rgba(255, 160, 60, 0.7);
+}
+
+.cal-icon {
+  width: 16px;
+  height: 16px;
+  color: rgba(255, 160, 60, 0.7);
+  flex-shrink: 0;
+}
+
+#date-display {
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(255, 220, 180, 0.35);
+}
+
+#date-display.has-dates {
+  color: #fff5eb;
+}
+
+/* =====================
+   Calendar Popup
+   ===================== */
+.calendar-popup {
+  display: none;
+  background: #1e0c02;
+  border: 0.5px solid rgba(255, 160, 60, 0.35);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-top: -8px;
+}
+
+.calendar-popup.open {
+  display: block;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.cal-month-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff5eb;
+  letter-spacing: 0.05em;
+}
+
+.cal-nav {
+  background: none;
+  border: 0.5px solid rgba(255, 160, 60, 0.25);
+  border-radius: 6px;
+  color: rgba(255, 160, 60, 0.8);
+  font-size: 18px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+  line-height: 1;
+}
+
+.cal-nav:hover {
+  background: rgba(255, 160, 60, 0.1);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.cal-day-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 160, 60, 0.5);
+  text-align: center;
+  padding: 4px 0;
+  letter-spacing: 0.05em;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(255, 230, 200, 0.75);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+
+.cal-day:hover:not(.disabled):not(.empty) {
+  background: rgba(255, 160, 60, 0.15);
+  color: #fff5eb;
+}
+
+.cal-day.empty {
+  cursor: default;
+}
+
+.cal-day.disabled {
+  color: rgba(255, 230, 200, 0.2);
+  cursor: not-allowed;
+}
+
+.cal-day.selected-start,
+.cal-day.selected-end {
+  background: #c85214;
+  color: #fff5eb;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.cal-day.in-range {
+  background: rgba(200, 82, 20, 0.2);
+  color: #fff5eb;
+  border-radius: 0;
+}
+
+.cal-day.selected-start {
+  border-radius: 6px 0 0 6px;
+}
+
+.cal-day.selected-end {
+  border-radius: 0 6px 6px 0;
+}
+
+.cal-day.selected-start.selected-end {
+  border-radius: 6px;
+}
+
+.calendar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 0.5px solid rgba(255, 160, 60, 0.15);
+}
+
+#cal-selection-hint {
+  font-size: 12px;
+  color: rgba(255, 200, 140, 0.5);
+}
+
+.cal-clear {
+  background: none;
+  border: 0.5px solid rgba(255, 160, 60, 0.25);
+  border-radius: 6px;
+  color: rgba(255, 160, 60, 0.6);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cal-clear:hover {
+  background: rgba(255, 160, 60, 0.1);
+}
+
+/* =====================
+   Plan Button
+   ===================== */
+.plan-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: #c85214;
   border: none;
   border-radius: 10px;
-  padding: 0.65rem 1.2rem;
+  padding: 0.85rem 1.5rem;
   font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: #fff5eb;
   cursor: pointer;
-  white-space: nowrap;
   transition: background 0.2s, transform 0.1s;
+  margin-top: 4px;
 }
 
-button:hover { background: #e06020; }
-button:active { transform: scale(0.97); }
-
-/* ── Surprise card ── */
-.option-surprise {
-  background: linear-gradient(135deg, rgba(200, 82, 20, 0.3), rgba(255, 140, 30, 0.2));
-  border-color: rgba(255, 140, 40, 0.4);
-  text-align: center;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+.plan-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
-.option-surprise:hover {
-  background: linear-gradient(135deg, rgba(200, 82, 20, 0.45), rgba(255, 140, 30, 0.3));
-  transform: translateY(-1px);
+.plan-btn:hover {
+  background: #e06020;
 }
 
-.option-surprise:active { transform: scale(0.98); }
-
-.surprise-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.1rem;
-  font-style: italic;
-  color: #ffcf90;
-  margin-bottom: 0.2rem;
+.plan-btn:active {
+  transform: scale(0.98);
 }
 
-.surprise-sub {
-  font-size: 12px;
-  color: rgba(255, 200, 140, 0.55);
-}
-
-/* ── Divider ── */
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: rgba(255, 160, 60, 0.3);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin: 0.2rem 0;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 0.5px;
-  background: rgba(255, 160, 60, 0.2);
-}
-
-/* ── Result box ── */
+/* =====================
+   Result Box
+   ===================== */
 #result {
-  margin-top: 1.5rem;
-  background: rgba(0, 0, 0, 0.25);
-  border: 0.5px solid rgba(255, 160, 60, 0.2);
-  border-radius: 16px;
-  padding: 1.25rem 1.5rem;
-  font-size: 14px;
-  font-weight: 300;
-  color: rgba(255, 230, 200, 0.85);
-  line-height: 1.8;
+  margin-top: 2rem;
   display: none;
 }
 
-#result.visible { display: block; }
+#result.visible {
+  display: block;
+}
+
+.result-loading {
+  background: rgba(0, 0, 0, 0.25);
+  border: 0.5px solid rgba(255, 160, 60, 0.2);
+  border-radius: 16px;
+  padding: 1.5rem;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(255, 200, 140, 0.6);
+  font-style: italic;
+}
+
+/* Itinerary styles */
+.itinerary-header {
+  margin-bottom: 1.5rem;
+}
+
+.itinerary-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff5eb;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+
+.itinerary-meta {
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(255, 200, 140, 0.55);
+  letter-spacing: 0.05em;
+}
+
+.day-card {
+  background: rgba(0, 0, 0, 0.25);
+  border: 0.5px solid rgba(255, 160, 60, 0.2);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 12px;
+}
+
+.day-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 160, 60, 0.7);
+  margin-bottom: 0.5rem;
+}
+
+.day-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-style: italic;
+  color: #ffcf90;
+  margin-bottom: 0.75rem;
+}
+
+.day-content {
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(255, 230, 200, 0.8);
+  line-height: 1.8;
+  white-space: pre-wrap;
+}

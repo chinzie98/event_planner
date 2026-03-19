@@ -10,60 +10,53 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Build the prompt based on which option the user chose
-function buildPrompt(option, { location, budget }) {
-  if (option === "location") {
-    return `You are an enthusiastic travel planner. The user wants to visit ${location}.
-Suggest 5 specific things to do there, including one local food recommendation.
-Keep it inspiring, practical, and under 200 words.`;
-  }
+app.post("/plan-trip", async (req, res) => {
+  const { location, budget, startDate, endDate, duration } = req.body;
 
-  if (option === "budget") {
-    return `You are an enthusiastic travel planner. The user has a vacation budget of $${budget}.
-Suggest 3 destination ideas that fit this budget, with a brief note on why each is a great pick.
-Keep it inspiring and under 200 words.`;
-  }
+  if (!location) return res.status(400).json({ error: "A destination is required." });
+  if (!budget) return res.status(400).json({ error: "A budget is required." });
+  if (!duration) return res.status(400).json({ error: "Travel dates are required." });
 
-  if (option === "surprise") {
-    return `You are an enthusiastic travel planner. Surprise the user with one unexpected, exciting vacation destination.
-Tell them where to go, what makes it special, and one thing they must do there.
-Keep it fun and under 150 words.`;
-  }
+  const prompt = `You are a world-class travel writer in the style of a luxury travel magazine.
+
+Plan a ${duration}-day trip to ${location} from ${startDate} to ${endDate} with a total budget of $${budget} USD.
+
+Return ONLY a valid JSON object with no extra text, no markdown, no backticks. Use this exact structure:
+{
+  "days": [
+    {
+      "title": "A short evocative title for the day (e.g. 'Markets, Mosaics & Mint Tea')",
+      "activities": "A vivid, detailed paragraph describing the day from morning to evening. Include specific place names, meal recommendations, and practical tips. Write in the engaging style of a travel magazine feature."
+    }
+  ]
 }
 
-app.post("/plan-trip", async (req, res) => {
-  const { option, location, budget } = req.body;
-
-  // Validate the option
-  if (!["location", "budget", "surprise"].includes(option)) {
-    return res.status(400).json({ error: "Invalid option. Must be location, budget, or surprise." });
-  }
-
-  // Validate required fields per option
-  if (option === "location" && !location) {
-    return res.status(400).json({ error: "A location is required." });
-  }
-  if (option === "budget" && !budget) {
-    return res.status(400).json({ error: "A budget amount is required." });
-  }
+Make each day feel distinct and memorable. Include a mix of culture, food, exploration, and relaxation. Be specific — name actual restaurants, landmarks, and neighborhoods. Account for a realistic daily budget based on the total of $${budget} over ${duration} days.`;
 
   try {
-    const prompt = buildPrompt(option, { location, budget });
-
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 400,
+      max_tokens: 2000,
       messages: [
         { role: "user", content: prompt }
       ],
     });
 
-    const suggestions = message.content[0].text;
-    res.json({ suggestions });
+    const raw = message.content[0].text.trim();
+
+    // Parse the JSON response
+    try {
+      const parsed = JSON.parse(raw);
+      res.json(parsed);
+    } catch (parseError) {
+      // If JSON parsing fails, return raw text as fallback
+      console.error("JSON parse error:", parseError);
+      res.json({ suggestions: raw });
+    }
 
   } catch (error) {
     console.error("Anthropic error:", error);
-    res.status(500).json({ error: "Failed to generate travel suggestions. Please try again." });
+    res.status(500).json({ error: "Failed to generate your itinerary. Please try again." });
   }
 });
 
