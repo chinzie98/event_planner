@@ -4,7 +4,7 @@
 // Project Settings → API → Project URL and anon/public key
 // =====================
 //changed file name to auth.js and added auth functions
-const SUPABASE_URL = "https://lrexnbwtysxtndwveicb.supabaseClient.co";
+const SUPABASE_URL = "https://lrexnbwtysxtndwveicb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyZXhuYnd0eXN4dG5kd3ZlaWNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NDQwMTQsImV4cCI6MjA4OTUyMDAxNH0.tGFVylONs9d7W-BNAOoMl8cb3G7XNICmNZ_seIm7U1Y";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
