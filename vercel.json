@@ -1,32 +1,16 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "backend/server.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.css",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.js",
-      "use": "@vercel/static",
-      "config": { "excludeFiles": "backend/**" }
-    }
+    { "src": "backend/server.js", "use": "@vercel/node" },
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "vacay.css", "use": "@vercel/static" },
+    { "src": "vacation.js", "use": "@vercel/static" },
+    { "src": "auth.js", "use": "@vercel/static" }
   ],
   "routes": [
-    {
-      "src": "/plan-trip",
-      "dest": "backend/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
+    { "src": "/plan-trip", "dest": "backend/server.js" },
+    { "src": "/save-trip", "dest": "backend/server.js" },
+    { "src": "/get-trip/(.*)", "dest": "backend/server.js" },
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
