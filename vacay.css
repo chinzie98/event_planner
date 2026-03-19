@@ -1,60 +1,226 @@
-body {
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(to right, #6dd5ed, #2193b0);
-    color: #fff;
-    text-align: center;
-    padding: 50px 20px;
-    min-height: 100vh;
-    margin: 0;
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
+/* ── Page ── */
+body {
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #1a0a00 0%, #2d1200 40%, #1a0a00 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Background glow orbs ── */
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-orb-1 {
+  width: 500px;
+  height: 500px;
+  background: rgba(200, 80, 20, 0.25);
+  top: -100px;
+  right: -100px;
+}
+
+.bg-orb-2 {
+  width: 350px;
+  height: 350px;
+  background: rgba(255, 160, 30, 0.12);
+  bottom: -50px;
+  left: -80px;
+}
+
+/* ── Main container ── */
 .container {
-    background: rgba(0, 0, 0, 0.5);
-    padding: 30px;
-    border-radius: 15px;
-    max-width: 500px;
-    margin: auto;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 560px;
+  padding: 3rem 2rem;
+}
+
+/* ── Header ── */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 160, 60, 0.8);
+  margin-bottom: 0.75rem;
 }
 
 h1 {
-    margin-bottom: 20px;
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.4rem, 6vw, 3.2rem);
+  font-weight: 700;
+  color: #fff5eb;
+  line-height: 1.1;
+  margin-bottom: 0.4rem;
 }
 
+h1 em {
+  font-style: italic;
+  color: #ffb060;
+}
+
+.subtitle {
+  font-size: 15px;
+  font-weight: 300;
+  color: rgba(255, 230, 200, 0.6);
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+}
+
+/* ── Option cards ── */
 .options {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .option {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 0.5px solid rgba(255, 160, 60, 0.25);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  transition: background 0.2s, border-color 0.2s;
 }
 
-input {
-    padding: 10px;
-    border-radius: 5px;
-    border: none;
+.option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 160, 60, 0.45);
 }
 
+.option-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 160, 60, 0.7);
+  margin-bottom: 0.6rem;
+}
+
+/* ── Input rows ── */
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+input[type="text"],
+input[type="number"] {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border: 0.5px solid rgba(255, 160, 60, 0.3);
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: #fff5eb;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input::placeholder {
+  color: rgba(255, 220, 180, 0.35);
+}
+
+input:focus {
+  border-color: rgba(255, 160, 60, 0.7);
+}
+
+/* ── Buttons ── */
 button {
-    padding: 10px;
-    border-radius: 5px;
-    border: none;
-    background-color: #ff9800;
-    color: #fff;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.3s;
+  background: #c85214;
+  border: none;
+  border-radius: 10px;
+  padding: 0.65rem 1.2rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff5eb;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.1s;
 }
 
-button:hover {
-    background-color: #e68900;
+button:hover { background: #e06020; }
+button:active { transform: scale(0.97); }
+
+/* ── Surprise card ── */
+.option-surprise {
+  background: linear-gradient(135deg, rgba(200, 82, 20, 0.3), rgba(255, 140, 30, 0.2));
+  border-color: rgba(255, 140, 40, 0.4);
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
 }
 
+.option-surprise:hover {
+  background: linear-gradient(135deg, rgba(200, 82, 20, 0.45), rgba(255, 140, 30, 0.3));
+  transform: translateY(-1px);
+}
+
+.option-surprise:active { transform: scale(0.98); }
+
+.surprise-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-style: italic;
+  color: #ffcf90;
+  margin-bottom: 0.2rem;
+}
+
+.surprise-sub {
+  font-size: 12px;
+  color: rgba(255, 200, 140, 0.55);
+}
+
+/* ── Divider ── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 160, 60, 0.3);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0.2rem 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 0.5px;
+  background: rgba(255, 160, 60, 0.2);
+}
+
+/* ── Result box ── */
 #result {
-    margin-top: 30px;
-    font-size: 18px;
-    font-weight: bold;
+  margin-top: 1.5rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 0.5px solid rgba(255, 160, 60, 0.2);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(255, 230, 200, 0.85);
+  line-height: 1.8;
+  display: none;
 }
+
+#result.visible { display: block; }

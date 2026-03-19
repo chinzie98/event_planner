@@ -1,37 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vacation Planner</title>
-    <link rel="stylesheet" href="vacay.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vacation Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vacay.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Vacation Planner</h1>
-        <p>Choose one of the options below to plan your vacation:</p>
 
-        <div class="options">
-            <div class="option">
-                <label for="location">Preferred Location:</label>
-                <input type="text" id="location" placeholder="Enter a city or country">
-                <button onclick="planVacation('location')">Plan Trip</button>
-            </div>
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
 
-            <div class="option">
-                <label for="budget">Budget Amount ($):</label>
-                <input type="number" id="budget" placeholder="Enter your budget">
-                <button onclick="planVacation('budget')">Plan Trip</button>
-            </div>
+  <div class="container">
+    <p class="eyebrow">Your next adventure</p>
+    <h1>Vacation<br><em>Planner</em></h1>
+    <p class="subtitle">Tell us where you dream of going, what you can spend, or let fate decide.</p>
 
-            <div class="option">
-                <button class="surprise" onclick="planVacation('surprise')">Surprise Me!</button>
-            </div>
+    <div class="options">
+
+      <div class="option">
+        <p class="option-label">By destination</p>
+        <div class="input-row">
+          <input type="text" id="location" placeholder="City, country, or region…">
+          <button onclick="planVacation('location')">Plan trip</button>
         </div>
+      </div>
 
-        <div id="result"></div>
+      <div class="divider">or</div>
+
+      <div class="option">
+        <p class="option-label">By budget</p>
+        <div class="input-row">
+          <input type="number" id="budget" placeholder="Your budget in USD…">
+          <button onclick="planVacation('budget')">Plan trip</button>
+        </div>
+      </div>
+
+      <div class="divider">or</div>
+
+      <div class="option option-surprise" onclick="planVacation('surprise')">
+        <p class="surprise-title">Surprise me</p>
+        <p class="surprise-sub">Let us pick the perfect trip for you</p>
+      </div>
+
     </div>
 
-    <script src="vacation.js"></script>
+    <div id="result"></div>
+  </div>
+
+  <script src="vacation.js"></script>
 </body>
 </html>
