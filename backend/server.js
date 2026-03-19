@@ -17,40 +17,43 @@ app.post("/plan-trip", async (req, res) => {
   if (!budget) return res.status(400).json({ error: "A budget is required." });
   if (!duration) return res.status(400).json({ error: "Travel dates are required." });
 
+  const dailyBudget = Math.round(budget / duration);
+
   const prompt = `You are a world-class travel writer in the style of a luxury travel magazine.
 
-Plan a ${duration}-day trip to ${location} from ${startDate} to ${endDate} with a total budget of $${budget} USD.
+Plan a ${duration}-day trip to ${location} from ${startDate} to ${endDate} with a total budget of $${budget} USD (roughly $${dailyBudget}/day).
 
-Return ONLY a valid JSON object with no extra text, no markdown, no backticks. Use this exact structure:
+Return ONLY a valid JSON object. No markdown, no backticks, no explanation — just raw JSON.
+
+Use this exact structure:
 {
   "days": [
     {
       "title": "A short evocative title for the day (e.g. 'Markets, Mosaics & Mint Tea')",
-      "activities": "A vivid, detailed paragraph describing the day from morning to evening. Include specific place names, meal recommendations, and practical tips. Write in the engaging style of a travel magazine feature."
+      "activities": "A vivid paragraph describing the day from morning to evening. Include specific place names, restaurants, and practical tips. Write in an engaging travel magazine style.",
+      "estimatedCost": "A realistic daily cost estimate as a string e.g. '$120'"
     }
   ]
 }
 
-Make each day feel distinct and memorable. Include a mix of culture, food, exploration, and relaxation. Be specific — name actual restaurants, landmarks, and neighborhoods. Account for a realistic daily budget based on the total of $${budget} over ${duration} days.`;
+Make each day distinct. Include culture, food, exploration, and relaxation. Name actual restaurants, landmarks, and neighborhoods. Be specific and inspiring.`;
 
   try {
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2000,
-      messages: [
-        { role: "user", content: prompt }
-      ],
+      messages: [{ role: "user", content: prompt }],
     });
 
-    const raw = message.content[0].text.trim();
+    // Strip markdown code fences if present, then parse
+    let raw = message.content[0].text.trim();
+    raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
 
-    // Parse the JSON response
     try {
       const parsed = JSON.parse(raw);
       res.json(parsed);
     } catch (parseError) {
-      // If JSON parsing fails, return raw text as fallback
-      console.error("JSON parse error:", parseError);
+      console.error("JSON parse error:", parseError, "\nRaw response:", raw);
       res.json({ suggestions: raw });
     }
 
