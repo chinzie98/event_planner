@@ -1,13 +1,13 @@
 // =====================
 // Supabase Config
-// Replace these two values with your own from supabase.com
+// Replace these two values with your own from supabaseClient.com
 // Project Settings → API → Project URL and anon/public key
 // =====================
 //changed file name to auth.js and added auth functions
-const SUPABASE_URL = "https://lrexnbwtysxtndwveicb.supabase.co";
+const SUPABASE_URL = "https://lrexnbwtysxtndwveicb.supabaseClient.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyZXhuYnd0eXN4dG5kd3ZlaWNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NDQwMTQsImV4cCI6MjA4OTUyMDAxNH0.tGFVylONs9d7W-BNAOoMl8cb3G7XNICmNZ_seIm7U1Y";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // =====================
 // Session Management
@@ -15,14 +15,14 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 
 async function initAuth() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
   if (session) {
     currentUser = session.user;
     updateNavForUser(currentUser);
   }
 
   // Listen for auth state changes (login/logout)
-  supabase.auth.onAuthStateChange((_event, session) => {
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
     currentUser = session?.user ?? null;
     if (currentUser) {
       updateNavForUser(currentUser);
@@ -59,7 +59,7 @@ async function handleLogin() {
 
   if (!email || !password) return showAuthError("Please enter your email and password.");
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
   if (error) showAuthError(error.message);
 }
 
@@ -71,7 +71,7 @@ async function handleSignup() {
   if (!email || !password) return showAuthError("Please fill in all fields.");
   if (password.length < 6) return showAuthError("Password must be at least 6 characters.");
 
-  const { error } = await supabase.auth.signUp({ email, password });
+  const { error } = await supabaseClient.auth.signUp({ email, password });
   if (error) {
     showAuthError(error.message);
   } else {
@@ -80,7 +80,7 @@ async function handleSignup() {
 }
 
 async function handleLogout() {
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
 }
 
 // =====================
