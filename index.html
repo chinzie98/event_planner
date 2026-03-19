@@ -14,6 +14,54 @@
   <div class="bg-orb bg-orb-1"></div>
   <div class="bg-orb bg-orb-2"></div>
 
+  <!-- Top nav bar -->
+  <nav class="navbar">
+    <span class="nav-logo">Vacation Planner</span>
+    <div class="nav-right">
+      <span class="nav-user" id="nav-user"></span>
+      <button class="nav-btn" id="nav-auth-btn" onclick="openAuthModal('login')">Sign in</button>
+    </div>
+  </nav>
+
+  <!-- Auth Modal -->
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeAuthModal()">&#x2715;</button>
+
+      <div class="modal-tabs">
+        <button class="modal-tab active" id="tab-login" onclick="switchTab('login')">Sign in</button>
+        <button class="modal-tab" id="tab-signup" onclick="switchTab('signup')">Create account</button>
+      </div>
+
+      <div id="auth-error" class="auth-error"></div>
+
+      <div id="login-form">
+        <div class="modal-field">
+          <label class="field-label">Email</label>
+          <input type="email" id="login-email" placeholder="you@example.com">
+        </div>
+        <div class="modal-field">
+          <label class="field-label">Password</label>
+          <input type="password" id="login-password" placeholder="Your password">
+        </div>
+        <button class="plan-btn full-width" onclick="handleLogin()">Sign in</button>
+      </div>
+
+      <div id="signup-form" style="display:none;">
+        <div class="modal-field">
+          <label class="field-label">Email</label>
+          <input type="email" id="signup-email" placeholder="you@example.com">
+        </div>
+        <div class="modal-field">
+          <label class="field-label">Password</label>
+          <input type="password" id="signup-password" placeholder="At least 6 characters">
+        </div>
+        <button class="plan-btn full-width" onclick="handleSignup()">Create account</button>
+      </div>
+
+    </div>
+  </div>
+
   <div class="container">
     <p class="eyebrow">Your next adventure</p>
     <h1>Vacation<br><em>Planner</em></h1>
@@ -21,19 +69,16 @@
 
     <div class="form">
 
-      <!-- Location -->
       <div class="field">
         <label class="field-label" for="location">Destination</label>
         <input type="text" id="location" placeholder="City, country, or region…">
       </div>
 
-      <!-- Budget -->
       <div class="field">
         <label class="field-label" for="budget">Budget (USD)</label>
         <input type="number" id="budget" placeholder="Enter your total budget…">
       </div>
 
-      <!-- Date Range -->
       <div class="field">
         <label class="field-label">Travel dates</label>
         <div class="date-input-row" id="date-trigger">
@@ -46,7 +91,6 @@
         </div>
       </div>
 
-      <!-- Calendar Popup -->
       <div class="calendar-popup" id="calendar-popup">
         <div class="calendar-header">
           <button class="cal-nav" id="prev-month">&#8249;</button>
@@ -78,10 +122,12 @@
 
     </div>
 
-    <!-- Result -->
     <div id="result"></div>
   </div>
 
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
   <script src="vacation.js"></script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@supabase/supabase-js";
 
 const app = express();
 app.use(cors());
@@ -10,6 +11,14 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY  // Use service key on the server (not the anon key)
+);
+
+// =====================
+// Plan Trip
+// =====================
 app.post("/plan-trip", async (req, res) => {
   const { location, budget, startDate, endDate, duration } = req.body;
 
@@ -45,7 +54,6 @@ Make each day distinct. Include culture, food, exploration, and relaxation. Name
       messages: [{ role: "user", content: prompt }],
     });
 
-    // Strip markdown code fences if present, then parse
     let raw = message.content[0].text.trim();
     raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
 
@@ -53,13 +61,70 @@ Make each day distinct. Include culture, food, exploration, and relaxation. Name
       const parsed = JSON.parse(raw);
       res.json(parsed);
     } catch (parseError) {
-      console.error("JSON parse error:", parseError, "\nRaw response:", raw);
+      console.error("JSON parse error:", parseError);
       res.json({ suggestions: raw });
     }
 
   } catch (error) {
     console.error("Anthropic error:", error);
     res.status(500).json({ error: "Failed to generate your itinerary. Please try again." });
+  }
+});
+
+// =====================
+// Save Trip
+// =====================
+app.post("/save-trip", async (req, res) => {
+  const { userId, location, startDate, endDate, budget, duration, days } = req.body;
+
+  if (!userId) return res.status(401).json({ error: "You must be logged in to save a trip." });
+  if (!location || !days) return res.status(400).json({ error: "Missing trip data." });
+
+  try {
+    const { data, error } = await supabase
+      .from("trips")
+      .insert({
+        user_id: userId,
+        location,
+        start_date: startDate,
+        end_date: endDate,
+        budget,
+        duration,
+        days
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
+
+    res.json({ tripId: data.id });
+
+  } catch (error) {
+    console.error("Save trip error:", error);
+    res.status(500).json({ error: "Failed to save trip." });
+  }
+});
+
+// =====================
+// Get Shared Trip
+// =====================
+app.get("/get-trip/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { data, error } = await supabase
+      .from("trips")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: "Trip not found." });
+
+    res.json(data);
+
+  } catch (error) {
+    console.error("Get trip error:", error);
+    res.status(500).json({ error: "Failed to retrieve trip." });
   }
 });
 

@@ -51,6 +51,11 @@ document.addEventListener("DOMContentLoaded", () => {
       trigger.classList.remove("active");
     }
   });
+
+  // Check if viewing a shared trip
+  const params = new URLSearchParams(window.location.search);
+  const tripId = params.get("trip");
+  if (tripId) loadSharedTrip(tripId);
 });
 
 function renderCalendar() {
@@ -195,18 +200,41 @@ async function planVacation() {
 // =====================
 let currentSlide = 0;
 let slides = [];
+let currentTripData = null;
 
-function renderSlideshow(days, location, duration, budget) {
+function renderSlideshow(days, location, duration, budget, isShared = false) {
   slides = days;
   currentSlide = 0;
+  currentTripData = { days, location, duration, budget };
 
   const resultDiv = document.getElementById("result");
+
+  // Show save/share bar only if not viewing a shared trip
+  const actionBar = isShared ? `
+    <div class="action-bar">
+      <span class="shared-badge">Shared itinerary</span>
+      <button class="action-btn" onclick="copyShareLink(null)">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M13 7H7v6h6V7z" stroke="currentColor" stroke-width="1.2"/><path d="M13 3h4v4M7 17H3v-4M17 13v4h-4M3 7V3h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Copy link
+      </button>
+    </div>` : `
+    <div class="action-bar">
+      <button class="action-btn save-btn" id="save-btn" onclick="saveTrip()">
+        <svg viewBox="0 0 20 20" fill="none"><path d="M10 3v10M5 9l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Save itinerary
+      </button>
+      <button class="action-btn share-btn" id="share-btn" onclick="shareTrip()" disabled>
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="15" cy="5" r="2" stroke="currentColor" stroke-width="1.2"/><circle cx="5" cy="10" r="2" stroke="currentColor" stroke-width="1.2"/><circle cx="15" cy="15" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M7 9l6-3M7 11l6 3" stroke="currentColor" stroke-width="1.2"/></svg>
+        Share
+      </button>
+    </div>`;
 
   const header = `
     <div class="itinerary-header">
       <div class="itinerary-title">${duration} Perfect Day${duration > 1 ? "s" : ""} in ${location}</div>
       <div class="itinerary-meta">${formatDateRange()} &nbsp;·&nbsp; $${Number(budget).toLocaleString()} budget</div>
     </div>
+    ${actionBar}
     <div class="slideshow">
       <div class="slideshow-track" id="slideshow-track"></div>
       <div class="slideshow-controls">
@@ -224,7 +252,6 @@ function renderSlideshow(days, location, duration, budget) {
   resultDiv.innerHTML = header;
   resultDiv.classList.add("visible");
 
-  // Build slide cards
   const track = document.getElementById("slideshow-track");
   days.forEach((day, i) => {
     const card = document.createElement("div");
@@ -244,7 +271,6 @@ function renderSlideshow(days, location, duration, budget) {
     track.appendChild(card);
   });
 
-  // Build dots
   const dotsContainer = document.getElementById("slide-dots");
   days.forEach((_, i) => {
     const dot = document.createElement("div");
@@ -262,28 +288,20 @@ function changeSlide(direction) {
 
 function goToSlide(index) {
   if (index < 0 || index >= slides.length) return;
-
   const track = document.getElementById("slideshow-track");
   const cards = track.querySelectorAll(".slide-card");
   const dots = document.getElementById("slide-dots").querySelectorAll(".slide-dot");
-
-  // Determine direction for animation
   const direction = index > currentSlide ? "next" : "prev";
 
-  // Animate out current
   cards[currentSlide].classList.add(direction === "next" ? "exit-left" : "exit-right");
-
-  // Prepare next
   cards[index].classList.add(direction === "next" ? "enter-right" : "enter-left");
 
   setTimeout(() => {
     cards[currentSlide].classList.remove("active", "exit-left", "exit-right");
     cards[index].classList.remove("enter-right", "enter-left");
     cards[index].classList.add("active");
-
     dots[currentSlide].classList.remove("active");
     dots[index].classList.add("active");
-
     currentSlide = index;
     updateSlideControls();
   }, 300);
@@ -296,9 +314,115 @@ function updateSlideControls() {
   if (next) next.style.opacity = currentSlide === slides.length - 1 ? "0.3" : "1";
 }
 
-function showLoading() {
+// =====================
+// Save & Share
+// =====================
+async function saveTrip() {
+  if (!currentUser) {
+    openAuthModal("login");
+    return;
+  }
+
+  const saveBtn = document.getElementById("save-btn");
+  saveBtn.textContent = "Saving…";
+  saveBtn.disabled = true;
+
+  try {
+    const response = await fetch(`${SERVER_URL}/save-trip`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        location: currentTripData.location,
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate),
+        budget: currentTripData.budget,
+        duration: currentTripData.duration,
+        days: currentTripData.days
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.error);
+
+    // Enable share button with the trip ID
+    const shareBtn = document.getElementById("share-btn");
+    shareBtn.disabled = false;
+    shareBtn.onclick = () => copyShareLink(data.tripId);
+
+    saveBtn.innerHTML = `
+      <svg viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Saved!
+    `;
+
+  } catch (err) {
+    console.error("Save failed:", err);
+    saveBtn.textContent = "Save failed — try again";
+    saveBtn.disabled = false;
+  }
+}
+
+async function shareTrip() {
+  // This gets replaced with the actual trip ID after saving
+}
+
+function copyShareLink(tripId) {
+  const base = window.location.origin + window.location.pathname;
+  const url = tripId ? `${base}?trip=${tripId}` : window.location.href;
+  navigator.clipboard.writeText(url).then(() => {
+    showToast("Link copied to clipboard!");
+  });
+}
+
+// =====================
+// Load Shared Trip
+// =====================
+async function loadSharedTrip(tripId) {
+  showLoading("Loading shared itinerary…");
+  try {
+    const response = await fetch(`${SERVER_URL}/get-trip/${tripId}`);
+    if (!response.ok) return showError("Trip not found or no longer available.");
+    const trip = await response.json();
+
+    // Restore date state so formatDateRange() works
+    startDate = new Date(trip.start_date);
+    endDate = new Date(trip.end_date);
+
+    renderSlideshow(trip.days, trip.location, trip.duration, trip.budget, true);
+
+    // Hide the form when viewing a shared trip
+    document.querySelector(".form").style.display = "none";
+    document.querySelector(".subtitle").style.display = "none";
+
+  } catch (err) {
+    showError("Could not load this shared trip.");
+  }
+}
+
+// =====================
+// Toast notification
+// =====================
+function showToast(message) {
+  const existing = document.getElementById("toast");
+  if (existing) existing.remove();
+
+  const toast = document.createElement("div");
+  toast.id = "toast";
+  toast.className = "toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.classList.add("visible"), 10);
+  setTimeout(() => {
+    toast.classList.remove("visible");
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+function showLoading(msg = "Crafting your perfect itinerary…") {
   const resultDiv = document.getElementById("result");
-  resultDiv.innerHTML = `<div class="result-loading">Crafting your perfect itinerary…</div>`;
+  resultDiv.innerHTML = `<div class="result-loading">${msg}</div>`;
   resultDiv.classList.add("visible");
 }
 
