@@ -1,16 +1,16 @@
 import express from "express";
 import cors from "cors";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Build the AI prompt based on which option the user chose
+// Build the prompt based on which option the user chose
 function buildPrompt(option, { location, budget }) {
   if (option === "location") {
     return `You are an enthusiastic travel planner. The user wants to visit ${location}.
@@ -50,19 +50,19 @@ app.post("/plan-trip", async (req, res) => {
   try {
     const prompt = buildPrompt(option, { location, budget });
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const message = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 400,
       messages: [
-        { role: "user", content: prompt },
+        { role: "user", content: prompt }
       ],
-      max_tokens: 300,
     });
 
-    const suggestions = completion.choices[0].message.content;
+    const suggestions = message.content[0].text;
     res.json({ suggestions });
 
   } catch (error) {
-    console.error("OpenAI error:", error);
+    console.error("Anthropic error:", error);
     res.status(500).json({ error: "Failed to generate travel suggestions. Please try again." });
   }
 });
