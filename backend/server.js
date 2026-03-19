@@ -13,7 +13,7 @@ const anthropic = new Anthropic({
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY  // Use service key on the server (not the anon key)
+  process.env.SUPABASE_SERVICE_KEY
 );
 
 // =====================
@@ -96,12 +96,35 @@ app.post("/save-trip", async (req, res) => {
       .single();
 
     if (error) throw error;
-
     res.json({ tripId: data.id });
 
   } catch (error) {
     console.error("Save trip error:", error);
     res.status(500).json({ error: "Failed to save trip." });
+  }
+});
+
+// =====================
+// Get My Trips
+// =====================
+app.get("/my-trips/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  if (!userId) return res.status(401).json({ error: "User ID required." });
+
+  try {
+    const { data, error } = await supabase
+      .from("trips")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    res.json(data);
+
+  } catch (error) {
+    console.error("My trips error:", error);
+    res.status(500).json({ error: "Failed to load trips." });
   }
 });
 
@@ -119,12 +142,36 @@ app.get("/get-trip/:id", async (req, res) => {
       .single();
 
     if (error || !data) return res.status(404).json({ error: "Trip not found." });
-
     res.json(data);
 
   } catch (error) {
     console.error("Get trip error:", error);
     res.status(500).json({ error: "Failed to retrieve trip." });
+  }
+});
+
+// =====================
+// Delete Trip
+// =====================
+app.delete("/delete-trip/:id", async (req, res) => {
+  const { id } = req.params;
+  const { userId } = req.body;
+
+  if (!userId) return res.status(401).json({ error: "User ID required." });
+
+  try {
+    const { error } = await supabase
+      .from("trips")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", userId); // ensures users can only delete their own trips
+
+    if (error) throw error;
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error("Delete trip error:", error);
+    res.status(500).json({ error: "Failed to delete trip." });
   }
 });
 

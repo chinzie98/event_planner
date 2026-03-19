@@ -9,6 +9,8 @@ const { mockAnthropicCreate, mockSingle, mockChain } = vi.hoisted(() => {
   mockChain.insert = vi.fn(() => mockChain);
   mockChain.select = vi.fn(() => mockChain);
   mockChain.eq = vi.fn(() => mockChain);
+  mockChain.delete = vi.fn(() => mockChain);
+  mockChain.order = vi.fn(() => mockChain);
   mockChain.single = mockSingle;
 
   const mockAnthropicCreate = vi.fn();
@@ -321,6 +323,124 @@ describe("GET /get-trip/:id", () => {
     mockSingle.mockRejectedValue(new Error("Network timeout"));
 
     const res = await request(app).get("/get-trip/trip-abc-123");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/failed/i);
+  });
+});
+
+// =====================
+// GET /my-trips/:userId
+// =====================
+describe("GET /my-trips/:userId", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const trips = [
+    { id: "trip-1", location: "Paris", duration: 3, budget: 1500, days: [] },
+    { id: "trip-2", location: "Tokyo", duration: 5, budget: 2000, days: [] },
+  ];
+
+  it("returns list of trips for a user", async () => {
+    mockChain.order.mockResolvedValue({ data: trips, error: null });
+
+    const res = await request(app).get("/my-trips/user-123");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(2);
+    expect(res.body[0].location).toBe("Paris");
+  });
+
+  it("queries by user_id and orders by created_at desc", async () => {
+    mockChain.order.mockResolvedValue({ data: trips, error: null });
+
+    await request(app).get("/my-trips/user-123");
+
+    expect(mockChain.eq).toHaveBeenCalledWith("user_id", "user-123");
+    expect(mockChain.order).toHaveBeenCalledWith("created_at", { ascending: false });
+  });
+
+  it("returns empty array when user has no trips", async () => {
+    mockChain.order.mockResolvedValue({ data: [], error: null });
+
+    const res = await request(app).get("/my-trips/user-123");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(0);
+  });
+
+  it("returns 500 when Supabase returns an error", async () => {
+    mockChain.order.mockResolvedValue({ data: null, error: new Error("DB error") });
+
+    const res = await request(app).get("/my-trips/user-123");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/failed/i);
+  });
+
+  it("returns 500 when Supabase throws", async () => {
+    mockChain.order.mockRejectedValue(new Error("Connection error"));
+
+    const res = await request(app).get("/my-trips/user-123");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/failed/i);
+  });
+});
+
+// =====================
+// DELETE /delete-trip/:id
+// =====================
+describe("DELETE /delete-trip/:id", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns 401 when userId is missing", async () => {
+    const res = await request(app).delete("/delete-trip/trip-123").send({});
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toMatch(/user id/i);
+  });
+
+  it("returns success on valid delete", async () => {
+    // Default mockChain.eq returns mockChain; awaiting it gives mockChain with no error property
+    const res = await request(app)
+      .delete("/delete-trip/trip-123")
+      .send({ userId: "user-123" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  it("scopes delete to the requesting user's trips", async () => {
+    await request(app)
+      .delete("/delete-trip/trip-123")
+      .send({ userId: "user-123" });
+
+    expect(mockChain.eq).toHaveBeenCalledWith("id", "trip-123");
+    expect(mockChain.eq).toHaveBeenCalledWith("user_id", "user-123");
+  });
+
+  it("returns 500 when Supabase returns an error", async () => {
+    // First .eq() chains normally; second resolves with an error
+    mockChain.eq
+      .mockReturnValueOnce(mockChain)
+      .mockResolvedValueOnce({ error: new Error("DB error") });
+
+    const res = await request(app)
+      .delete("/delete-trip/trip-123")
+      .send({ userId: "user-123" });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/failed/i);
+  });
+
+  it("returns 500 when Supabase throws", async () => {
+    mockChain.eq
+      .mockReturnValueOnce(mockChain)
+      .mockRejectedValueOnce(new Error("Connection error"));
+
+    const res = await request(app)
+      .delete("/delete-trip/trip-123")
+      .send({ userId: "user-123" });
 
     expect(res.status).toBe(500);
     expect(res.body.error).toMatch(/failed/i);

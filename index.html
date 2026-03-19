@@ -14,10 +14,10 @@
   <div class="bg-orb bg-orb-1"></div>
   <div class="bg-orb bg-orb-2"></div>
 
-  <!-- Top nav bar -->
   <nav class="navbar">
-    <span class="nav-logo">Vacation Planner</span>
+    <a class="nav-logo" href="/">Vacation Planner</a>
     <div class="nav-right">
+      <a class="nav-trips-link" id="nav-trips-link" href="/trips.html" style="display:none;">My Trips</a>
       <span class="nav-user" id="nav-user"></span>
       <button class="nav-btn" id="nav-auth-btn" onclick="openAuthModal('login')">Sign in</button>
     </div>
@@ -27,14 +27,11 @@
   <div class="modal-overlay" id="auth-modal">
     <div class="modal">
       <button class="modal-close" onclick="closeAuthModal()">&#x2715;</button>
-
       <div class="modal-tabs">
         <button class="modal-tab active" id="tab-login" onclick="switchTab('login')">Sign in</button>
         <button class="modal-tab" id="tab-signup" onclick="switchTab('signup')">Create account</button>
       </div>
-
       <div id="auth-error" class="auth-error"></div>
-
       <div id="login-form">
         <div class="modal-field">
           <label class="field-label">Email</label>
@@ -46,7 +43,6 @@
         </div>
         <button class="plan-btn full-width" onclick="handleLogin()">Sign in</button>
       </div>
-
       <div id="signup-form" style="display:none;">
         <div class="modal-field">
           <label class="field-label">Email</label>
@@ -58,7 +54,6 @@
         </div>
         <button class="plan-btn full-width" onclick="handleSignup()">Create account</button>
       </div>
-
     </div>
   </div>
 
@@ -125,7 +120,6 @@
     <div id="result"></div>
   </div>
 
-  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="auth.js"></script>
   <script src="vacation.js"></script>

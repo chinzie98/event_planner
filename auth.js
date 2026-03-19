@@ -1,28 +1,20 @@
-// =====================
-// Supabase Config
-// Replace these two values with your own from supabaseClient.com
-// Project Settings → API → Project URL and anon/public key
-// =====================
-//changed file name to auth.js and added auth functions
 const SUPABASE_URL = "https://lrexnbwtysxtndwveicb.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyZXhuYnd0eXN4dG5kd3ZlaWNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NDQwMTQsImV4cCI6MjA4OTUyMDAxNH0.tGFVylONs9d7W-BNAOoMl8cb3G7XNICmNZ_seIm7U1Y";
 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// =====================
-// Session Management
-// =====================
 let currentUser = null;
+let authInitialized = false;
 
 async function initAuth() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
   if (session) {
     currentUser = session.user;
     updateNavForUser(currentUser);
   }
+  authInitialized = true;
 
-  // Listen for auth state changes (login/logout)
-  supabaseClient.auth.onAuthStateChange((_event, session) => {
+  supabase.auth.onAuthStateChange((_event, session) => {
     currentUser = session?.user ?? null;
     if (currentUser) {
       updateNavForUser(currentUser);
@@ -36,30 +28,29 @@ async function initAuth() {
 function updateNavForUser(user) {
   const navUser = document.getElementById("nav-user");
   const navBtn = document.getElementById("nav-auth-btn");
-  navUser.textContent = user.email;
-  navBtn.textContent = "Sign out";
-  navBtn.onclick = handleLogout;
+  const tripsLink = document.getElementById("nav-trips-link");
+
+  if (navUser) navUser.textContent = user.email;
+  if (navBtn) { navBtn.textContent = "Sign out"; navBtn.onclick = handleLogout; }
+  if (tripsLink) tripsLink.style.display = "inline-flex";
 }
 
 function updateNavForGuest() {
   const navUser = document.getElementById("nav-user");
   const navBtn = document.getElementById("nav-auth-btn");
-  navUser.textContent = "";
-  navBtn.textContent = "Sign in";
-  navBtn.onclick = () => openAuthModal("login");
+  const tripsLink = document.getElementById("nav-trips-link");
+
+  if (navUser) navUser.textContent = "";
+  if (navBtn) { navBtn.textContent = "Sign in"; navBtn.onclick = () => openAuthModal("login"); }
+  if (tripsLink) tripsLink.style.display = "none";
 }
 
-// =====================
-// Auth Actions
-// =====================
 async function handleLogin() {
   const email = document.getElementById("login-email").value.trim();
   const password = document.getElementById("login-password").value;
   clearAuthError();
-
   if (!email || !password) return showAuthError("Please enter your email and password.");
-
-  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) showAuthError(error.message);
 }
 
@@ -67,59 +58,55 @@ async function handleSignup() {
   const email = document.getElementById("signup-email").value.trim();
   const password = document.getElementById("signup-password").value;
   clearAuthError();
-
   if (!email || !password) return showAuthError("Please fill in all fields.");
   if (password.length < 6) return showAuthError("Password must be at least 6 characters.");
-
-  const { error } = await supabaseClient.auth.signUp({ email, password });
-  if (error) {
-    showAuthError(error.message);
-  } else {
-    showAuthError("Check your email to confirm your account!", "success");
-  }
+  const { error } = await supabase.auth.signUp({ email, password });
+  if (error) { showAuthError(error.message); }
+  else { showAuthError("Check your email to confirm your account!", "success"); }
 }
 
 async function handleLogout() {
-  await supabaseClient.auth.signOut();
+  await supabase.auth.signOut();
 }
 
-// =====================
-// Modal Controls
-// =====================
 function openAuthModal(tab = "login") {
-  document.getElementById("auth-modal").classList.add("open");
-  switchTab(tab);
-  clearAuthError();
+  const modal = document.getElementById("auth-modal");
+  if (modal) { modal.classList.add("open"); switchTab(tab); clearAuthError(); }
 }
 
 function closeAuthModal() {
-  document.getElementById("auth-modal").classList.remove("open");
+  const modal = document.getElementById("auth-modal");
+  if (modal) modal.classList.remove("open");
 }
 
 function switchTab(tab) {
-  document.getElementById("login-form").style.display = tab === "login" ? "block" : "none";
-  document.getElementById("signup-form").style.display = tab === "signup" ? "block" : "none";
-  document.getElementById("tab-login").classList.toggle("active", tab === "login");
-  document.getElementById("tab-signup").classList.toggle("active", tab === "signup");
+  const loginForm = document.getElementById("login-form");
+  const signupForm = document.getElementById("signup-form");
+  const tabLogin = document.getElementById("tab-login");
+  const tabSignup = document.getElementById("tab-signup");
+  if (loginForm) loginForm.style.display = tab === "login" ? "block" : "none";
+  if (signupForm) signupForm.style.display = tab === "signup" ? "block" : "none";
+  if (tabLogin) tabLogin.classList.toggle("active", tab === "login");
+  if (tabSignup) tabSignup.classList.toggle("active", tab === "signup");
   clearAuthError();
 }
 
 function showAuthError(msg, type = "error") {
   const el = document.getElementById("auth-error");
-  el.textContent = msg;
-  el.className = `auth-error ${type}`;
+  if (el) { el.textContent = msg; el.className = `auth-error ${type}`; }
 }
 
 function clearAuthError() {
   const el = document.getElementById("auth-error");
-  el.textContent = "";
-  el.className = "auth-error";
+  if (el) { el.textContent = ""; el.className = "auth-error"; }
 }
 
-// Close modal when clicking outside
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("auth-modal").addEventListener("click", (e) => {
-    if (e.target === document.getElementById("auth-modal")) closeAuthModal();
-  });
+  const modal = document.getElementById("auth-modal");
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeAuthModal();
+    });
+  }
   initAuth();
 });

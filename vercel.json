@@ -3,14 +3,19 @@
   "builds": [
     { "src": "backend/server.js", "use": "@vercel/node" },
     { "src": "index.html", "use": "@vercel/static" },
+    { "src": "trips.html", "use": "@vercel/static" },
     { "src": "vacay.css", "use": "@vercel/static" },
+    { "src": "trips.css", "use": "@vercel/static" },
     { "src": "vacation.js", "use": "@vercel/static" },
-    { "src": "auth.js", "use": "@vercel/static" }
+    { "src": "auth.js", "use": "@vercel/static" },
+    { "src": "trips.js", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/plan-trip", "dest": "backend/server.js" },
     { "src": "/save-trip", "dest": "backend/server.js" },
+    { "src": "/my-trips/(.*)", "dest": "backend/server.js" },
     { "src": "/get-trip/(.*)", "dest": "backend/server.js" },
+    { "src": "/delete-trip/(.*)", "dest": "backend/server.js" },
     { "src": "/(.*)", "dest": "/$1" }
   ]
 }
