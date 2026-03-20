@@ -1,11 +1,47 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 
 const app = express();
+app.use(helmet());
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "16kb" }));
+
+// =====================
+// Rate Limiting
+// =====================
+
+// Global: 300 requests per 15 minutes per IP
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please try again later." },
+});
+
+// /plan-trip: 15 requests per hour per IP (Anthropic API — costs money)
+const planTripLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many trip requests. Please wait before trying again." },
+});
+
+// Auth-adjacent write endpoints: 20 per hour per IP
+const writeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please try again later." },
+});
+
+app.use(globalLimiter);
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -19,13 +55,31 @@ const supabase = createClient(
 // =====================
 // Plan Trip
 // =====================
-app.post("/plan-trip", async (req, res) => {
+app.post("/plan-trip", planTripLimiter, async (req, res) => {
   const { userId, location, budget, startDate, endDate, duration, travelStyle, groupType, dietary } = req.body;
 
   if (!userId) return res.status(401).json({ error: "You must be signed in to plan a trip." });
   if (!location) return res.status(400).json({ error: "A destination is required." });
   if (!budget) return res.status(400).json({ error: "A budget is required." });
   if (!duration) return res.status(400).json({ error: "Travel dates are required." });
+
+  // Input validation
+  if (typeof location !== "string" || location.length > 200)
+    return res.status(400).json({ error: "Invalid destination." });
+  if (typeof dietary === "string" && dietary.length > 300)
+    return res.status(400).json({ error: "Dietary notes are too long." });
+  const budgetNum = Number(budget);
+  if (!Number.isFinite(budgetNum) || budgetNum < 1 || budgetNum > 1_000_000)
+    return res.status(400).json({ error: "Budget must be between $1 and $1,000,000." });
+  const durationNum = Number(duration);
+  if (!Number.isInteger(durationNum) || durationNum < 1 || durationNum > 30)
+    return res.status(400).json({ error: "Trip duration must be between 1 and 30 days." });
+  const VALID_STYLES = ["cultural", "foodie", "adventure", "relaxed", "luxury"];
+  const VALID_GROUPS = ["solo", "couple", "family", "friends"];
+  if (travelStyle && (!Array.isArray(travelStyle) || travelStyle.some(s => !VALID_STYLES.includes(s))))
+    return res.status(400).json({ error: "Invalid travel style." });
+  if (groupType && !VALID_GROUPS.includes(groupType))
+    return res.status(400).json({ error: "Invalid group type." });
 
   // Check usage limit for non-premium users
   const { data: profile, error: profileError } = await supabase
@@ -142,7 +196,7 @@ Make each day distinct. Prioritise the traveller's preferences. Name actual rest
 // =====================
 // Save Trip
 // =====================
-app.post("/save-trip", async (req, res) => {
+app.post("/save-trip", writeLimiter, async (req, res) => {
   const { userId, location, startDate, endDate, budget, duration, days } = req.body;
 
   if (!userId) return res.status(401).json({ error: "You must be logged in to save a trip." });
@@ -257,7 +311,7 @@ app.get("/config", (_req, res) => {
 // =====================
 // Upgrade to Premium
 // =====================
-app.post("/upgrade-premium", async (req, res) => {
+app.post("/upgrade-premium", writeLimiter, async (req, res) => {
   const { userId } = req.body;
   if (!userId) return res.status(401).json({ error: "User ID required." });
 
