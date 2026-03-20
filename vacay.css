@@ -100,6 +100,19 @@ body {
 
 .nav-btn:hover { background: rgba(100, 180, 255, 0.1); }
 
+.nav-trips-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.nav-trips-link svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
 .nav-upgrade-btn {
   background: rgba(250, 200, 60, 0.08);
   border-color: rgba(250, 200, 60, 0.4);

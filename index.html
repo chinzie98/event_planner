@@ -17,8 +17,14 @@
   <nav class="navbar">
     <a class="nav-logo" href="/">Vacation Planner</a>
     <div class="nav-right">
-      <a class="nav-trips-link" id="nav-trips-link" href="/trips.html" style="display:none;">My Trips</a>
       <span class="nav-user" id="nav-user"></span>
+      <a class="nav-btn nav-trips-link" id="nav-trips-link" href="/trips.html" style="display:none;">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="7" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M7 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        My Trips
+      </a>
       <button class="nav-btn nav-upgrade-btn" id="nav-upgrade-btn" style="display:none;">&#9733; Upgrade</button>
       <button class="nav-btn" id="nav-auth-btn" onclick="openAuthModal('login')">Sign in</button>
     </div>
