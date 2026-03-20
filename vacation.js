@@ -24,9 +24,14 @@ async function initAutocomplete() {
     const { googleMapsKey } = await res.json();
     if (!googleMapsKey) throw new Error("No Google Maps key configured");
 
-    await loadScript(
-      `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(googleMapsKey)}&libraries=places&v=weekly`
-    );
+    await new Promise((resolve, reject) => {
+      window.__mapsReady = resolve;
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(googleMapsKey)}&libraries=places&v=weekly&loading=async&callback=__mapsReady`;
+      script.async = true;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
 
     const { PlaceAutocompleteElement } = google.maps.places;
 
