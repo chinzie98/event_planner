@@ -147,10 +147,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Check if viewing a shared trip
+  // Check URL params
   const params = new URLSearchParams(window.location.search);
   const tripId = params.get("trip");
   if (tripId) loadSharedTrip(tripId);
+  if (params.get("upgrade") === "true") openPremiumModal("general");
 });
 
 function renderCalendar() {
@@ -286,7 +287,7 @@ async function planVacation() {
     if (response.status === 429) {
       document.getElementById("result").innerHTML = "";
       document.getElementById("result").classList.remove("visible");
-      openPremiumModal();
+      openPremiumModal("usage_limit");
       return;
     }
 
@@ -466,6 +467,16 @@ async function saveTrip() {
 
     const data = await response.json();
 
+    if (response.status === 403 && data.error === "save_requires_premium") {
+      saveBtn.innerHTML = `
+        <svg viewBox="0 0 20 20" fill="none"><path d="M10 3v10M5 9l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Save itinerary
+      `;
+      saveBtn.disabled = false;
+      openPremiumModal("save");
+      return;
+    }
+
     if (!response.ok) throw new Error(data.error);
 
     // Enable share button with the trip ID
@@ -545,7 +556,19 @@ function showToast(message) {
 // =====================
 // Premium Modal
 // =====================
-function openPremiumModal() {
+function openPremiumModal(reason = "general") {
+  const title = document.getElementById("premium-modal-title");
+  const subtitle = document.getElementById("premium-modal-subtitle");
+  if (reason === "usage_limit") {
+    title.textContent = "Daily limit reached";
+    subtitle.innerHTML = "Free accounts can plan up to <strong>3 trips per 24 hours</strong>. Upgrade for unlimited planning and saving.";
+  } else if (reason === "save") {
+    title.textContent = "Saving requires Premium";
+    subtitle.innerHTML = "Free accounts can plan trips but <strong>saving itineraries</strong> is a Premium feature.";
+  } else {
+    title.textContent = "Upgrade to Premium";
+    subtitle.innerHTML = "Unlock the full Vacation Planner experience.";
+  }
   document.getElementById("premium-modal").classList.add("open");
 }
 
@@ -567,6 +590,8 @@ async function upgradeToPremium() {
     if (res.ok) {
       closePremiumModal();
       showToast("You're now Premium! Unlimited trips await.");
+      const upgradeBtn = document.getElementById("nav-upgrade-btn");
+      if (upgradeBtn) upgradeBtn.style.display = "none";
     } else {
       btn.textContent = "Upgrade failed — try again";
       btn.disabled = false;

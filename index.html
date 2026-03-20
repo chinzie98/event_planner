@@ -19,6 +19,7 @@
     <div class="nav-right">
       <a class="nav-trips-link" id="nav-trips-link" href="/trips.html" style="display:none;">My Trips</a>
       <span class="nav-user" id="nav-user"></span>
+      <button class="nav-btn nav-upgrade-btn" id="nav-upgrade-btn" style="display:none;">&#9733; Upgrade</button>
       <button class="nav-btn" id="nav-auth-btn" onclick="openAuthModal('login')">Sign in</button>
     </div>
   </nav>
@@ -66,12 +67,12 @@
           <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
         </svg>
       </div>
-      <h2 class="premium-title">Daily limit reached</h2>
-      <p class="premium-subtitle">Free accounts can plan up to <strong>3 trips per 24 hours</strong>. Upgrade to Premium for unlimited trip planning.</p>
+      <h2 class="premium-title" id="premium-modal-title">Upgrade to Premium</h2>
+      <p class="premium-subtitle" id="premium-modal-subtitle">Unlock the full Vacation Planner experience.</p>
       <ul class="premium-features">
-        <li>Unlimited trip plans per day</li>
-        <li>Priority itinerary generation</li>
-        <li>Unlimited saved trips</li>
+        <li>Up to 3 trip plans per day on free — unlimited on Premium</li>
+        <li>Save and revisit your itineraries</li>
+        <li>Share trips with a link</li>
       </ul>
       <button class="plan-btn full-width" id="upgrade-btn" onclick="upgradeToPremium()">
         Upgrade to Premium

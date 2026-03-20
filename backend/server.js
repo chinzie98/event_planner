@@ -148,6 +148,22 @@ app.post("/save-trip", async (req, res) => {
   if (!userId) return res.status(401).json({ error: "You must be logged in to save a trip." });
   if (!location || !days) return res.status(400).json({ error: "Missing trip data." });
 
+  // Only premium users can save trips
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("is_premium")
+    .eq("user_id", userId)
+    .single();
+
+  if (profileError && profileError.code !== "PGRST116") {
+    console.error("Profile lookup error:", profileError);
+    return res.status(500).json({ error: "Failed to verify account status." });
+  }
+
+  if (!profile?.is_premium) {
+    return res.status(403).json({ error: "save_requires_premium" });
+  }
+
   try {
     const { data, error } = await supabase
       .from("trips")
@@ -216,6 +232,19 @@ app.get("/get-trip/:id", async (req, res) => {
     console.error("Get trip error:", error);
     res.status(500).json({ error: "Failed to retrieve trip." });
   }
+});
+
+// =====================
+// User Profile
+// =====================
+app.get("/user-profile/:userId", async (req, res) => {
+  const { userId } = req.params;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_premium")
+    .eq("user_id", userId)
+    .single();
+  res.json({ is_premium: profile?.is_premium || false });
 });
 
 // =====================

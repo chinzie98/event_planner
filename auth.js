@@ -25,24 +25,48 @@ async function initAuth() {
   });
 }
 
-function updateNavForUser(user) {
+async function updateNavForUser(user) {
   const navUser = document.getElementById("nav-user");
   const navBtn = document.getElementById("nav-auth-btn");
   const tripsLink = document.getElementById("nav-trips-link");
+  const upgradeBtn = document.getElementById("nav-upgrade-btn");
 
   if (navUser) navUser.textContent = user.email;
   if (navBtn) { navBtn.textContent = "Sign out"; navBtn.onclick = handleLogout; }
   if (tripsLink) tripsLink.style.display = "inline-flex";
+
+  if (upgradeBtn) {
+    try {
+      const res = await fetch(`/user-profile/${user.id}`);
+      const profile = await res.json();
+      if (!profile.is_premium) {
+        upgradeBtn.style.display = "inline-flex";
+        upgradeBtn.onclick = () => {
+          if (typeof openPremiumModal === "function") {
+            openPremiumModal("general");
+          } else {
+            window.location.href = "/?upgrade=true";
+          }
+        };
+      } else {
+        upgradeBtn.style.display = "none";
+      }
+    } catch {
+      // Non-fatal — skip showing the button
+    }
+  }
 }
 
 function updateNavForGuest() {
   const navUser = document.getElementById("nav-user");
   const navBtn = document.getElementById("nav-auth-btn");
   const tripsLink = document.getElementById("nav-trips-link");
+  const upgradeBtn = document.getElementById("nav-upgrade-btn");
 
   if (navUser) navUser.textContent = "";
   if (navBtn) { navBtn.textContent = "Sign in"; navBtn.onclick = () => openAuthModal("login"); }
   if (tripsLink) tripsLink.style.display = "none";
+  if (upgradeBtn) upgradeBtn.style.display = "none";
 }
 
 async function handleLogin() {

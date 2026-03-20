@@ -100,6 +100,17 @@ body {
 
 .nav-btn:hover { background: rgba(100, 180, 255, 0.1); }
 
+.nav-upgrade-btn {
+  background: rgba(250, 200, 60, 0.08);
+  border-color: rgba(250, 200, 60, 0.4);
+  color: #fad060;
+}
+
+.nav-upgrade-btn:hover {
+  background: rgba(250, 200, 60, 0.15);
+  border-color: rgba(250, 200, 60, 0.65);
+}
+
 /* =====================
    Auth Modal
    ===================== */
