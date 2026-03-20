@@ -248,6 +248,11 @@ function getDurationDays() {
 // Trip Planning
 // =====================
 async function planVacation() {
+  if (!currentUser) {
+    openAuthModal("login");
+    return;
+  }
+
   const location = locationValue.trim();
   const budget = document.getElementById("budget").value;
 
@@ -266,6 +271,7 @@ async function planVacation() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        userId: currentUser.id,
         location,
         budget,
         startDate: formatDate(startDate),
@@ -276,6 +282,13 @@ async function planVacation() {
         dietary
       }),
     });
+
+    if (response.status === 429) {
+      document.getElementById("result").innerHTML = "";
+      document.getElementById("result").classList.remove("visible");
+      openPremiumModal();
+      return;
+    }
 
     if (!response.ok) {
       const err = await response.json();
@@ -527,6 +540,41 @@ function showToast(message) {
     toast.classList.remove("visible");
     setTimeout(() => toast.remove(), 300);
   }, 3000);
+}
+
+// =====================
+// Premium Modal
+// =====================
+function openPremiumModal() {
+  document.getElementById("premium-modal").classList.add("open");
+}
+
+function closePremiumModal() {
+  document.getElementById("premium-modal").classList.remove("open");
+}
+
+async function upgradeToPremium() {
+  if (!currentUser) return;
+  const btn = document.getElementById("upgrade-btn");
+  btn.textContent = "Upgrading…";
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${SERVER_URL}/upgrade-premium`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: currentUser.id }),
+    });
+    if (res.ok) {
+      closePremiumModal();
+      showToast("You're now Premium! Unlimited trips await.");
+    } else {
+      btn.textContent = "Upgrade failed — try again";
+      btn.disabled = false;
+    }
+  } catch {
+    btn.textContent = "Upgrade failed — try again";
+    btn.disabled = false;
+  }
 }
 
 function showLoading(msg = "Crafting your perfect itinerary…") {

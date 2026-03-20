@@ -20,11 +20,42 @@ const supabase = createClient(
 // Plan Trip
 // =====================
 app.post("/plan-trip", async (req, res) => {
-  const { location, budget, startDate, endDate, duration, travelStyle, groupType, dietary } = req.body;
+  const { userId, location, budget, startDate, endDate, duration, travelStyle, groupType, dietary } = req.body;
 
+  if (!userId) return res.status(401).json({ error: "You must be signed in to plan a trip." });
   if (!location) return res.status(400).json({ error: "A destination is required." });
   if (!budget) return res.status(400).json({ error: "A budget is required." });
   if (!duration) return res.status(400).json({ error: "Travel dates are required." });
+
+  // Check usage limit for non-premium users
+  try {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_premium")
+      .eq("user_id", userId)
+      .single();
+
+    const isPremium = profile?.is_premium || false;
+
+    if (!isPremium) {
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count } = await supabase
+        .from("usage_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("created_at", twentyFourHoursAgo);
+
+      if (count >= 3) {
+        return res.status(429).json({ error: "usage_limit" });
+      }
+    }
+
+    // Log this usage
+    await supabase.from("usage_logs").insert({ user_id: userId });
+  } catch (usageError) {
+    console.error("Usage check error:", usageError);
+    // Non-fatal: allow trip to proceed if usage check fails
+  }
 
   const dailyBudget = Math.round(budget / duration);
 
@@ -182,6 +213,26 @@ app.get("/get-trip/:id", async (req, res) => {
 // =====================
 app.get("/config", (_req, res) => {
   res.json({ googleMapsKey: process.env.GOOGLE_PLACES_KEY || "" });
+});
+
+// =====================
+// Upgrade to Premium
+// =====================
+app.post("/upgrade-premium", async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(401).json({ error: "User ID required." });
+
+  try {
+    const { error } = await supabase
+      .from("profiles")
+      .upsert({ user_id: userId, is_premium: true }, { onConflict: "user_id" });
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Upgrade error:", error);
+    res.status(500).json({ error: "Failed to upgrade account." });
+  }
 });
 
 // =====================

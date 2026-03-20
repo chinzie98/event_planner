@@ -57,6 +57,30 @@
     </div>
   </div>
 
+  <!-- Premium Upgrade Modal -->
+  <div class="modal-overlay" id="premium-modal">
+    <div class="modal premium-modal-inner">
+      <button class="modal-close" onclick="closePremiumModal()">&#x2715;</button>
+      <div class="premium-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 class="premium-title">Daily limit reached</h2>
+      <p class="premium-subtitle">Free accounts can plan up to <strong>3 trips per 24 hours</strong>. Upgrade to Premium for unlimited trip planning.</p>
+      <ul class="premium-features">
+        <li>Unlimited trip plans per day</li>
+        <li>Priority itinerary generation</li>
+        <li>Unlimited saved trips</li>
+      </ul>
+      <button class="plan-btn full-width" id="upgrade-btn" onclick="upgradeToPremium()">
+        Upgrade to Premium
+        <svg viewBox="0 0 20 20" fill="none"><path d="M10 3L13.09 8.26L20 9.27L15 14.14L16.18 21.02L10 17.77L3.82 21.02L5 14.14L0 9.27L6.91 8.26L10 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" transform="scale(0.8) translate(2.5, 2.5)"/></svg>
+      </button>
+      <p class="premium-note">Demo mode — no payment required.</p>
+    </div>
+  </div>
+
   <div class="container">
     <p class="eyebrow">Your next adventure</p>
     <h1>Vacation<br><em>Planner</em></h1>

@@ -17,6 +17,7 @@
     { "src": "/my-trips/(.*)", "dest": "backend/server.js" },
     { "src": "/get-trip/(.*)", "dest": "backend/server.js" },
     { "src": "/delete-trip/(.*)", "dest": "backend/server.js" },
+    { "src": "/upgrade-premium", "dest": "backend/server.js" },
     { "src": "/(.*)", "dest": "/$1" }
   ]
 }
