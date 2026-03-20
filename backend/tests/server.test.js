@@ -481,3 +481,35 @@ describe("DELETE /delete-trip/:id", () => {
     expect(res.body.error).toMatch(/failed/i);
   });
 });
+
+// =====================
+// GET /config
+// =====================
+describe("GET /config", () => {
+  it("returns googleMapsKey as a string", async () => {
+    const res = await request(app).get("/config");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("googleMapsKey");
+    expect(typeof res.body.googleMapsKey).toBe("string");
+  });
+
+  it("returns empty string when GOOGLE_PLACES_KEY is not set", async () => {
+    const original = process.env.GOOGLE_PLACES_KEY;
+    delete process.env.GOOGLE_PLACES_KEY;
+
+    const res = await request(app).get("/config");
+    expect(res.body.googleMapsKey).toBe("");
+
+    process.env.GOOGLE_PLACES_KEY = original;
+  });
+
+  it("returns the key value when GOOGLE_PLACES_KEY is set", async () => {
+    process.env.GOOGLE_PLACES_KEY = "test-maps-key-123";
+
+    const res = await request(app).get("/config");
+    expect(res.body.googleMapsKey).toBe("test-maps-key-123");
+
+    delete process.env.GOOGLE_PLACES_KEY;
+  });
+});

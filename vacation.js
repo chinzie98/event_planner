@@ -1,6 +1,67 @@
 const SERVER_URL = "";
 
 // =====================
+// Location Autocomplete
+// =====================
+let locationValue = "";
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+async function initAutocomplete() {
+  const container = document.getElementById("location-container");
+  try {
+    const res = await fetch(`${SERVER_URL}/config`);
+    const { googleMapsKey } = await res.json();
+    if (!googleMapsKey) throw new Error("No Google Maps key configured");
+
+    await loadScript(
+      `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(googleMapsKey)}&v=weekly&loading=async`
+    );
+
+    const { PlaceAutocompleteElement } = await google.maps.importLibrary("places");
+
+    const placeAutocomplete = new PlaceAutocompleteElement({
+      includedPrimaryTypes: ["locality", "administrative_area_level_1", "country"],
+    });
+    container.appendChild(placeAutocomplete);
+
+    // Capture typed text as a fallback (user may not select a suggestion)
+    placeAutocomplete.addEventListener("input", (e) => {
+      locationValue = e.target.value || "";
+    });
+
+    // Preferred path: use the formatted display name from the selected suggestion
+    placeAutocomplete.addEventListener("gmp-select", async (e) => {
+      try {
+        const place = e.placePrediction.toPlace();
+        await place.fetchFields({ fields: ["displayName", "formattedAddress"] });
+        locationValue = place.displayName || place.formattedAddress || "";
+      } catch {
+        locationValue = e.placePrediction?.text?.toString() || locationValue;
+      }
+    });
+
+  } catch (err) {
+    console.warn("Places autocomplete unavailable, using plain input:", err.message);
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = "City, country, or region…";
+    input.addEventListener("input", (e) => { locationValue = e.target.value; });
+    container.appendChild(input);
+  }
+}
+
+// =====================
 // Calendar State
 // =====================
 let currentMonth = new Date().getMonth();
@@ -44,6 +105,7 @@ function getSinglePill(groupId) {
 document.addEventListener("DOMContentLoaded", () => {
   renderCalendar();
   initPills();
+  initAutocomplete();
 
   document.getElementById("date-trigger").addEventListener("click", () => {
     const popup = document.getElementById("calendar-popup");
@@ -181,7 +243,7 @@ function getDurationDays() {
 // Trip Planning
 // =====================
 async function planVacation() {
-  const location = document.getElementById("location").value.trim();
+  const location = locationValue.trim();
   const budget = document.getElementById("budget").value;
 
   if (!location) return showError("Please enter a destination.");

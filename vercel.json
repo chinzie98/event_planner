@@ -11,6 +11,7 @@
     { "src": "trips.js", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/config", "dest": "backend/server.js" },
     { "src": "/plan-trip", "dest": "backend/server.js" },
     { "src": "/save-trip", "dest": "backend/server.js" },
     { "src": "/my-trips/(.*)", "dest": "backend/server.js" },

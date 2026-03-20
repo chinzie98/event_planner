@@ -714,6 +714,58 @@ input:focus { border-color: rgba(255, 160, 60, 0.7); }
 }
 
 /* =====================
+   Location Autocomplete
+   ===================== */
+#location-container {
+  width: 100%;
+}
+
+gmp-placeautocomplete {
+  display: block;
+  width: 100%;
+
+  /* Material Design color tokens — map to the dark amber scheme */
+  --gmp-mat-color-primary: #c85214;
+  --gmp-mat-color-on-primary: #fff5eb;
+  --gmp-mat-color-surface: rgba(10, 4, 0, 0.85);
+  --gmp-mat-color-on-surface: #fff5eb;
+  --gmp-mat-color-on-surface-variant: rgba(255, 220, 180, 0.35);
+  --gmp-mat-color-outline: rgba(255, 160, 60, 0.3);
+  --gmp-mat-color-outline-variant: rgba(255, 160, 60, 0.12);
+  --gmp-mat-color-secondary-container: rgba(200, 82, 20, 0.15);
+  --gmp-mat-color-on-secondary-container: #ffb878;
+
+  /* Match existing input geometry */
+  --gmp-mat-shape-extra-small: 10px;
+  --gmp-mat-typescale-body-large-font: 'DM Sans', sans-serif;
+  --gmp-mat-typescale-body-large-size: 14px;
+  --gmp-mat-typescale-body-large-weight: 300;
+}
+
+/* Fallback plain input rendered when no API key is present */
+#location-container input[type="text"] {
+  background: rgba(0, 0, 0, 0.3);
+  border: 0.5px solid rgba(255, 160, 60, 0.3);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: #fff5eb;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+#location-container input[type="text"]::placeholder {
+  color: rgba(255, 220, 180, 0.35);
+}
+
+#location-container input[type="text"]:focus {
+  border-color: rgba(255, 160, 60, 0.7);
+}
+
+/* =====================
    Preference Pills
    ===================== */
 .field-optional {

@@ -178,6 +178,13 @@ app.get("/get-trip/:id", async (req, res) => {
 });
 
 // =====================
+// Frontend Config
+// =====================
+app.get("/config", (_req, res) => {
+  res.json({ googleMapsKey: process.env.GOOGLE_PLACES_KEY || "" });
+});
+
+// =====================
 // Delete Trip
 // =====================
 app.delete("/delete-trip/:id", async (req, res) => {
