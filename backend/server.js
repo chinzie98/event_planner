@@ -28,33 +28,43 @@ app.post("/plan-trip", async (req, res) => {
   if (!duration) return res.status(400).json({ error: "Travel dates are required." });
 
   // Check usage limit for non-premium users
-  try {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_premium")
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("is_premium")
+    .eq("user_id", userId)
+    .single();
+
+  if (profileError && profileError.code !== "PGRST116") {
+    // PGRST116 = row not found (user has no profile yet — treat as free)
+    console.error("Profile lookup error:", profileError);
+    return res.status(500).json({ error: "Failed to verify account status." });
+  }
+
+  const isPremium = profile?.is_premium || false;
+
+  if (!isPremium) {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count, error: countError } = await supabase
+      .from("usage_logs")
+      .select("*", { count: "exact", head: true })
       .eq("user_id", userId)
-      .single();
+      .gte("created_at", twentyFourHoursAgo);
 
-    const isPremium = profile?.is_premium || false;
-
-    if (!isPremium) {
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { count } = await supabase
-        .from("usage_logs")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .gte("created_at", twentyFourHoursAgo);
-
-      if (count >= 3) {
-        return res.status(429).json({ error: "usage_limit" });
-      }
+    if (countError) {
+      console.error("Usage count error:", countError);
+      return res.status(500).json({ error: "Failed to verify usage limit." });
     }
 
-    // Log this usage
-    await supabase.from("usage_logs").insert({ user_id: userId });
-  } catch (usageError) {
-    console.error("Usage check error:", usageError);
-    // Non-fatal: allow trip to proceed if usage check fails
+    if (count >= 3) {
+      return res.status(429).json({ error: "usage_limit" });
+    }
+  }
+
+  // Log this usage
+  const { error: logError } = await supabase.from("usage_logs").insert({ user_id: userId });
+  if (logError) {
+    console.error("Usage log error:", logError);
+    return res.status(500).json({ error: "Failed to record usage." });
   }
 
   const dailyBudget = Math.round(budget / duration);
