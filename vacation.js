@@ -25,10 +25,10 @@ async function initAutocomplete() {
     if (!googleMapsKey) throw new Error("No Google Maps key configured");
 
     await loadScript(
-      `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(googleMapsKey)}&v=weekly&loading=async`
+      `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(googleMapsKey)}&libraries=places&v=weekly`
     );
 
-    const { PlaceAutocompleteElement } = await google.maps.importLibrary("places");
+    const { PlaceAutocompleteElement } = google.maps.places;
 
     const placeAutocomplete = new PlaceAutocompleteElement({
       includedPrimaryTypes: ["locality", "administrative_area_level_1", "country"],
