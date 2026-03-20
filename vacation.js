@@ -14,8 +14,36 @@ const MONTHS = ["January","February","March","April","May","June","July","August
 // =====================
 // Calendar Init
 // =====================
+// =====================
+// Pill Selectors
+// =====================
+function initPills() {
+  // Multi-select pills (travel style)
+  document.querySelectorAll("#travel-style .pill").forEach(btn => {
+    btn.addEventListener("click", () => btn.classList.toggle("active"));
+  });
+
+  // Single-select pills (group type)
+  document.querySelectorAll("#group-type .pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#group-type .pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+}
+
+function getSelectedPills(groupId) {
+  return [...document.querySelectorAll(`#${groupId} .pill.active`)].map(b => b.dataset.value);
+}
+
+function getSinglePill(groupId) {
+  const active = document.querySelector(`#${groupId} .pill.active`);
+  return active ? active.dataset.value : null;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   renderCalendar();
+  initPills();
 
   document.getElementById("date-trigger").addEventListener("click", () => {
     const popup = document.getElementById("calendar-popup");
@@ -161,6 +189,9 @@ async function planVacation() {
   if (!startDate || !endDate) return showError("Please select your travel dates.");
 
   const duration = getDurationDays();
+  const travelStyle = getSelectedPills("travel-style");
+  const groupType = getSinglePill("group-type");
+  const dietary = document.getElementById("dietary").value.trim();
   showLoading();
 
   try {
@@ -172,7 +203,10 @@ async function planVacation() {
         budget,
         startDate: formatDate(startDate),
         endDate: formatDate(endDate),
-        duration
+        duration,
+        travelStyle,
+        groupType,
+        dietary
       }),
     });
 
@@ -256,10 +290,18 @@ function renderSlideshow(days, location, duration, budget, isShared = false) {
   days.forEach((day, i) => {
     const card = document.createElement("div");
     card.className = "slide-card" + (i === 0 ? " active" : "");
+    const highlightsHTML = day.highlights && day.highlights.length
+      ? `<ul class="slide-highlights">${day.highlights.map(h => `<li>${h}</li>`).join("")}</ul>`
+      : "";
+    const tipHTML = day.tip
+      ? `<div class="slide-tip"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.2"/><path d="M10 6.5v4M10 13v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>${day.tip}</div>`
+      : "";
     card.innerHTML = `
       <div class="slide-day-label">Day ${i + 1} of ${days.length}</div>
       <div class="slide-day-title">${day.title || ""}</div>
       <div class="slide-activities">${day.activities || ""}</div>
+      ${highlightsHTML}
+      ${tipHTML}
       <div class="slide-cost">
         <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.2"/>

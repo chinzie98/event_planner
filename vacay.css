@@ -712,3 +712,97 @@ input:focus { border-color: rgba(255, 160, 60, 0.7); }
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* =====================
+   Preference Pills
+   ===================== */
+.field-optional {
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(255, 200, 140, 0.35);
+  letter-spacing: 0.02em;
+  margin-left: 4px;
+}
+
+.pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 200, 140, 0.55);
+  background: rgba(0, 0, 0, 0.2);
+  border: 0.5px solid rgba(255, 160, 60, 0.2);
+  border-radius: 20px;
+  padding: 0.35rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.pill:hover {
+  border-color: rgba(255, 160, 60, 0.45);
+  color: rgba(255, 200, 140, 0.8);
+}
+
+.pill.active {
+  background: rgba(200, 82, 20, 0.2);
+  border-color: rgba(200, 82, 20, 0.6);
+  color: #ffb878;
+}
+
+/* =====================
+   Slide Highlights & Tip
+   ===================== */
+.slide-highlights {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 1rem 0;
+  padding: 1rem 1.1rem;
+  background: rgba(255, 160, 60, 0.05);
+  border-left: 2px solid rgba(200, 82, 20, 0.4);
+  border-radius: 0 8px 8px 0;
+}
+
+.slide-highlights li {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(255, 207, 144, 0.85);
+  line-height: 1.45;
+  padding-left: 14px;
+  position: relative;
+}
+
+.slide-highlights li::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: rgba(200, 82, 20, 0.7);
+  font-size: 11px;
+  top: 1px;
+}
+
+.slide-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(255, 200, 140, 0.5);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.slide-tip svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: rgba(255, 160, 60, 0.5);
+}

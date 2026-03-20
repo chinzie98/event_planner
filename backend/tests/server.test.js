@@ -173,8 +173,43 @@ describe("POST /plan-trip", () => {
       endDate: "Jul 3, 2026",
     });
 
-    const calledPrompt = mockAnthropicCreate.mock.calls[0][0].messages[0].content;
-    expect(calledPrompt).toContain("$300/day"); // 900 / 3 = 300
+    // messages[0] = one-shot example, messages[2] = actual request
+    const call = mockAnthropicCreate.mock.calls[0][0];
+    expect(call.messages[2].content).toContain("$300/day"); // 900 / 3 = 300
+  });
+
+  it("sets the system parameter", async () => {
+    mockAnthropicCreate.mockResolvedValue({
+      content: [{ text: JSON.stringify({ days: [] }) }],
+    });
+
+    await request(app).post("/plan-trip").send({
+      location: "Paris", budget: 1000, duration: 2,
+      startDate: "Apr 1, 2026", endDate: "Apr 2, 2026",
+    });
+
+    const call = mockAnthropicCreate.mock.calls[0][0];
+    expect(call.system).toBeDefined();
+    expect(call.system).toMatch(/travel writer/i);
+  });
+
+  it("includes preferences in the prompt when provided", async () => {
+    mockAnthropicCreate.mockResolvedValue({
+      content: [{ text: JSON.stringify({ days: [] }) }],
+    });
+
+    await request(app).post("/plan-trip").send({
+      location: "Tokyo", budget: 2000, duration: 4,
+      startDate: "May 1, 2026", endDate: "May 4, 2026",
+      travelStyle: ["foodie", "cultural"],
+      groupType: "couple",
+      dietary: "vegetarian",
+    });
+
+    const prompt = mockAnthropicCreate.mock.calls[0][0].messages[2].content;
+    expect(prompt).toContain("couple");
+    expect(prompt).toContain("foodie");
+    expect(prompt).toContain("vegetarian");
   });
 });
 

@@ -20,7 +20,7 @@ const supabase = createClient(
 // Plan Trip
 // =====================
 app.post("/plan-trip", async (req, res) => {
-  const { location, budget, startDate, endDate, duration } = req.body;
+  const { location, budget, startDate, endDate, duration, travelStyle, groupType, dietary } = req.body;
 
   if (!location) return res.status(400).json({ error: "A destination is required." });
   if (!budget) return res.status(400).json({ error: "A budget is required." });
@@ -28,30 +28,57 @@ app.post("/plan-trip", async (req, res) => {
 
   const dailyBudget = Math.round(budget / duration);
 
-  const prompt = `You are a world-class travel writer in the style of a luxury travel magazine.
+  // Build optional preference lines
+  const prefLines = [];
+  if (groupType) prefLines.push(`Travelling as: ${groupType}`);
+  if (travelStyle && travelStyle.length) prefLines.push(`Travel style: ${travelStyle.join(", ")}`);
+  if (dietary) prefLines.push(`Dietary notes: ${dietary}`);
+  const prefsSection = prefLines.length
+    ? `\nTraveller preferences:\n${prefLines.map(l => `- ${l}`).join("\n")}\n`
+    : "";
 
-Plan a ${duration}-day trip to ${location} from ${startDate} to ${endDate} with a total budget of $${budget} USD (roughly $${dailyBudget}/day).
+  // One-shot example to anchor output quality and format
+  const exampleRequest = `Plan a 1-day trip to Kyoto for a couple from Apr 10 to Apr 10 with a total budget of $180 USD (roughly $180/day).\nTraveller preferences:\n- Travelling as: couple\n- Travel style: cultural\nReturn ONLY the JSON object.`;
+  const exampleResponse = JSON.stringify({
+    days: [{
+      title: "Temples, Tofu & Twilight in Gion",
+      activities: "Begin at Fushimi Inari Taisha before the crowds arrive — the thousands of vermillion torii gates glow in early morning light. Hire a bicycle from Eki Rent-a-Car near Kyoto Station and ride north along the Kamo River to the Philosopher's Path, stopping at Nanzen-ji's soaring aqueduct. Lunch at Omen, a beloved udon restaurant on the path. Spend the afternoon in Gion's preserved machiya townhouses and catch glimpses of geiko on Hanamikoji Street. End with a multi-course kaiseki dinner at Kikunoi Honten — the seasonal vegetables and tofu are extraordinary.",
+      highlights: [
+        "Arrive at Fushimi Inari by 7 am — crowds swell after 9",
+        "Rent bicycles near Kyoto Station to cover the Philosopher's Path with ease",
+        "Reserve Kikunoi Honten at least two weeks in advance"
+      ],
+      tip: "Wear slip-on shoes — you'll be removing footwear at every temple.",
+      estimatedCost: "$175"
+    }]
+  });
 
-Return ONLY a valid JSON object. No markdown, no backticks, no explanation — just raw JSON.
-
-Use this exact structure:
+  const userPrompt = `Plan a ${duration}-day trip to ${location} from ${startDate} to ${endDate} with a total budget of $${budget} USD (roughly $${dailyBudget}/day).${prefsSection}
+Return ONLY a valid JSON object — no markdown, no backticks, no explanation. Use this exact structure:
 {
   "days": [
     {
-      "title": "A short evocative title for the day (e.g. 'Markets, Mosaics & Mint Tea')",
-      "activities": "A vivid paragraph describing the day from morning to evening. Include specific place names, restaurants, and practical tips. Write in an engaging travel magazine style.",
-      "estimatedCost": "A realistic daily cost estimate as a string e.g. '$120'"
+      "title": "A short evocative title (e.g. 'Markets, Mosaics & Mint Tea')",
+      "activities": "A vivid paragraph describing the full day from morning to evening. Include specific place names, restaurants, and sensory detail. Write in an engaging travel magazine style.",
+      "highlights": ["Key highlight or booking tip #1", "Key highlight #2", "Key highlight #3"],
+      "tip": "One practical insider tip for the day.",
+      "estimatedCost": "Realistic daily cost as a string e.g. '$120'"
     }
   ]
 }
 
-Make each day distinct. Include culture, food, exploration, and relaxation. Name actual restaurants, landmarks, and neighborhoods. Be specific and inspiring.`;
+Make each day distinct. Prioritise the traveller's preferences. Name actual restaurants, landmarks, and neighbourhoods. Be specific and inspiring.`;
 
   try {
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 2000,
-      messages: [{ role: "user", content: prompt }],
+      max_tokens: 4000,
+      system: "You are a world-class travel writer and itinerary planner. You write in the vivid, specific style of a luxury travel magazine — evocative prose, real restaurant names, actual neighbourhood names, insider tips. You are also practical: you respect the traveller's budget, travel style, dietary needs, and group type.",
+      messages: [
+        { role: "user", content: exampleRequest },
+        { role: "assistant", content: exampleResponse },
+        { role: "user", content: userPrompt }
+      ],
     });
 
     let raw = message.content[0].text.trim();
