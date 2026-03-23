@@ -23,19 +23,21 @@ const globalLimiter = rateLimit({
   message: { error: "Too many requests. Please try again later." },
 });
 
-// /plan-trip: 15 requests per hour per IP (Anthropic API — costs money)
+// /plan-trip: 15 requests per hour per user (Anthropic API — costs money)
 const planTripLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 15,
+  keyGenerator: (req) => req.user?.id || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many trip requests. Please wait before trying again." },
 });
 
-// Auth-adjacent write endpoints: 20 per hour per IP
+// Auth-adjacent write endpoints: 20 per hour per user
 const writeLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 20,
+  keyGenerator: (req) => req.user?.id || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests. Please try again later." },
@@ -53,12 +55,29 @@ const supabase = createClient(
 );
 
 // =====================
+// Auth Middleware
+// =====================
+async function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Authentication required." });
+  }
+  const token = authHeader.slice(7);
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) {
+    return res.status(401).json({ error: "Invalid or expired session. Please sign in again." });
+  }
+  req.user = user;
+  next();
+}
+
+// =====================
 // Plan Trip
 // =====================
-app.post("/plan-trip", planTripLimiter, async (req, res) => {
-  const { userId, location, budget, startDate, endDate, duration, travelStyle, groupType, dietary } = req.body;
+app.post("/plan-trip", requireAuth, planTripLimiter, async (req, res) => {
+  const userId = req.user.id;
+  const { location, budget, startDate, endDate, duration, travelStyle, groupType, dietary } = req.body;
 
-  if (!userId) return res.status(401).json({ error: "You must be signed in to plan a trip." });
   if (!location) return res.status(400).json({ error: "A destination is required." });
   if (!budget) return res.status(400).json({ error: "A budget is required." });
   if (!duration) return res.status(400).json({ error: "Travel dates are required." });
@@ -196,10 +215,10 @@ Make each day distinct. Prioritise the traveller's preferences. Name actual rest
 // =====================
 // Save Trip
 // =====================
-app.post("/save-trip", writeLimiter, async (req, res) => {
-  const { userId, location, startDate, endDate, budget, duration, days } = req.body;
+app.post("/save-trip", requireAuth, writeLimiter, async (req, res) => {
+  const userId = req.user.id;
+  const { location, startDate, endDate, budget, duration, days } = req.body;
 
-  if (!userId) return res.status(401).json({ error: "You must be logged in to save a trip." });
   if (!location || !days) return res.status(400).json({ error: "Missing trip data." });
 
   // Only premium users can save trips
@@ -245,10 +264,8 @@ app.post("/save-trip", writeLimiter, async (req, res) => {
 // =====================
 // Get My Trips
 // =====================
-app.get("/my-trips/:userId", async (req, res) => {
-  const { userId } = req.params;
-
-  if (!userId) return res.status(401).json({ error: "User ID required." });
+app.get("/my-trips/:userId", requireAuth, async (req, res) => {
+  const userId = req.user.id;
 
   try {
     const { data, error } = await supabase
@@ -291,8 +308,8 @@ app.get("/get-trip/:id", async (req, res) => {
 // =====================
 // User Profile
 // =====================
-app.get("/user-profile/:userId", async (req, res) => {
-  const { userId } = req.params;
+app.get("/user-profile/:userId", requireAuth, async (req, res) => {
+  const userId = req.user.id;
   const { data: profile } = await supabase
     .from("profiles")
     .select("is_premium")
@@ -311,9 +328,8 @@ app.get("/config", (_req, res) => {
 // =====================
 // Upgrade to Premium
 // =====================
-app.post("/upgrade-premium", writeLimiter, async (req, res) => {
-  const { userId } = req.body;
-  if (!userId) return res.status(401).json({ error: "User ID required." });
+app.post("/upgrade-premium", requireAuth, writeLimiter, async (req, res) => {
+  const userId = req.user.id;
 
   try {
     const { error } = await supabase
@@ -331,11 +347,9 @@ app.post("/upgrade-premium", writeLimiter, async (req, res) => {
 // =====================
 // Delete Trip
 // =====================
-app.delete("/delete-trip/:id", async (req, res) => {
+app.delete("/delete-trip/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
-  const { userId } = req.body;
-
-  if (!userId) return res.status(401).json({ error: "User ID required." });
+  const userId = req.user.id;
 
   try {
     const { error } = await supabase

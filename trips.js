@@ -30,7 +30,10 @@ async function loadTrips() {
   }
 
   try {
-    const response = await fetch(`${SERVER_URL}/my-trips/${currentUser.id}`);
+    const token = await getAuthToken();
+    const response = await fetch(`${SERVER_URL}/my-trips/${currentUser.id}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
     if (!response.ok) throw new Error("Failed to load trips");
 
     const trips = await response.json();
@@ -100,10 +103,11 @@ async function deleteTrip(tripId, btn) {
   if (!confirm("Are you sure you want to delete this trip?")) return;
 
   try {
+    const token = await getAuthToken();
     const response = await fetch(`${SERVER_URL}/delete-trip/${tripId}`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: currentUser.id })
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify({})
     });
 
     if (!response.ok) throw new Error("Delete failed");

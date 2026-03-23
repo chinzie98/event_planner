@@ -37,7 +37,11 @@ async function updateNavForUser(user) {
 
   if (upgradeBtn) {
     try {
-      const res = await fetch(`/user-profile/${user.id}`);
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const token = session?.access_token || null;
+      const res = await fetch(`/user-profile/${user.id}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       const profile = await res.json();
       if (!profile.is_premium) {
         upgradeBtn.style.display = "inline-flex";
@@ -91,6 +95,11 @@ async function handleSignup() {
 
 async function handleLogout() {
   await supabaseClient.auth.signOut();
+}
+
+async function getAuthToken() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  return session?.access_token || null;
 }
 
 function openAuthModal(tab = "login") {

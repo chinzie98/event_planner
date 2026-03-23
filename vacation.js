@@ -268,11 +268,11 @@ async function planVacation() {
   showLoading();
 
   try {
+    const token = await getAuthToken();
     const response = await fetch(`${SERVER_URL}/plan-trip`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
       body: JSON.stringify({
-        userId: currentUser.id,
         location,
         budget,
         startDate: formatDate(startDate),
@@ -451,11 +451,11 @@ async function saveTrip() {
   saveBtn.disabled = true;
 
   try {
+    const token = await getAuthToken();
     const response = await fetch(`${SERVER_URL}/save-trip`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
       body: JSON.stringify({
-        userId: currentUser.id,
         location: currentTripData.location,
         startDate: formatDate(startDate),
         endDate: formatDate(endDate),
@@ -582,10 +582,11 @@ async function upgradeToPremium() {
   btn.textContent = "Upgrading…";
   btn.disabled = true;
   try {
+    const token = await getAuthToken();
     const res = await fetch(`${SERVER_URL}/upgrade-premium`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: currentUser.id }),
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify({}),
     });
     if (res.ok) {
       closePremiumModal();
