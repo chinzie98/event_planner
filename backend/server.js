@@ -312,10 +312,10 @@ app.get("/user-profile/:userId", requireAuth, async (req, res) => {
   const userId = req.user.id;
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_premium")
+    .select("is_premium, username")
     .eq("user_id", userId)
     .single();
-  res.json({ is_premium: profile?.is_premium || false });
+  res.json({ is_premium: profile?.is_premium || false, username: profile?.username || null });
 });
 
 // =====================
@@ -323,6 +323,113 @@ app.get("/user-profile/:userId", requireAuth, async (req, res) => {
 // =====================
 app.get("/config", (_req, res) => {
   res.json({ googleMapsKey: process.env.GOOGLE_PLACES_KEY || "" });
+});
+
+// =====================
+// Check Username Availability
+// =====================
+app.post("/check-username", async (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: "Username is required." });
+
+  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+  if (!usernameRegex.test(username))
+    return res.status(400).json({ error: "Username must be 3–20 characters: letters, numbers, or underscores only." });
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("user_id")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Check username error:", error);
+    return res.status(500).json({ error: "Could not check username availability." });
+  }
+
+  if (data) return res.status(409).json({ error: "Username is already taken." });
+  res.json({ available: true });
+});
+
+// =====================
+// Set Username (called after Supabase signUp)
+// =====================
+app.post("/set-username", async (req, res) => {
+  const { userId, username } = req.body;
+  if (!userId || !username) return res.status(400).json({ error: "Missing required fields." });
+
+  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+  if (!usernameRegex.test(username))
+    return res.status(400).json({ error: "Invalid username format." });
+
+  // Verify the user actually exists in auth before trusting the userId
+  const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(userId);
+  if (userError || !user) return res.status(400).json({ error: "Invalid account." });
+
+  // Check uniqueness
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("user_id")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (existing) return res.status(409).json({ error: "Username is already taken." });
+
+  // Upsert profile — store email alongside username for forgot-username lookups
+  const { error } = await supabase
+    .from("profiles")
+    .upsert({ user_id: userId, username, email: user.email }, { onConflict: "user_id" });
+
+  if (error) {
+    console.error("Set username error:", error);
+    return res.status(500).json({ error: "Failed to save username." });
+  }
+
+  res.json({ success: true });
+});
+
+// =====================
+// Resolve Username → Email (used for login)
+// =====================
+app.post("/resolve-username", async (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: "Username is required." });
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("email")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Resolve username error:", error);
+    return res.status(500).json({ error: "Could not look up username." });
+  }
+  if (!data?.email) return res.status(404).json({ error: "Username not found." });
+
+  res.json({ email: data.email });
+});
+
+// =====================
+// Forgot Username (lookup by email)
+// =====================
+app.get("/forgot-username", async (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ error: "Email is required." });
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("email", email.toLowerCase())
+    .maybeSingle();
+
+  if (error) {
+    console.error("Forgot username error:", error);
+    return res.status(500).json({ error: "Could not look up account." });
+  }
+  if (!data?.username) return res.status(404).json({ error: "No account found with that email." });
+
+  res.json({ username: data.username });
 });
 
 // =====================

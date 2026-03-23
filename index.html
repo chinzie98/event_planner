@@ -34,23 +34,35 @@
   <div class="modal-overlay" id="auth-modal">
     <div class="modal">
       <button class="modal-close" onclick="closeAuthModal()">&#x2715;</button>
-      <div class="modal-tabs">
+      <div class="modal-tabs" id="auth-tabs">
         <button class="modal-tab active" id="tab-login" onclick="switchTab('login')">Sign in</button>
         <button class="modal-tab" id="tab-signup" onclick="switchTab('signup')">Create account</button>
       </div>
       <div id="auth-error" class="auth-error"></div>
+
+      <!-- Sign In -->
       <div id="login-form">
         <div class="modal-field">
-          <label class="field-label">Email</label>
-          <input type="email" id="login-email" placeholder="you@example.com">
+          <label class="field-label">Username</label>
+          <input type="text" id="login-username" placeholder="Your username">
         </div>
         <div class="modal-field">
           <label class="field-label">Password</label>
           <input type="password" id="login-password" placeholder="Your password">
         </div>
         <button class="plan-btn full-width" onclick="handleLogin()">Sign in</button>
+        <div class="modal-links">
+          <button class="modal-link" onclick="showView('forgot-password')">Forgot password?</button>
+          <button class="modal-link" onclick="showView('forgot-username')">Forgot username?</button>
+        </div>
       </div>
+
+      <!-- Create Account -->
       <div id="signup-form" style="display:none;">
+        <div class="modal-field">
+          <label class="field-label">Username</label>
+          <input type="text" id="signup-username" placeholder="3–20 chars: letters, numbers, _">
+        </div>
         <div class="modal-field">
           <label class="field-label">Email</label>
           <input type="email" id="signup-email" placeholder="you@example.com">
@@ -60,6 +72,41 @@
           <input type="password" id="signup-password" placeholder="At least 6 characters">
         </div>
         <button class="plan-btn full-width" onclick="handleSignup()">Create account</button>
+      </div>
+
+      <!-- Forgot Password -->
+      <div id="forgot-password-form" style="display:none;">
+        <button class="modal-link modal-back" onclick="showView('login')">&#8592; Back to sign in</button>
+        <p class="modal-form-title">Reset your password</p>
+        <p class="modal-form-desc">Enter your email and we'll send a reset link.</p>
+        <div class="modal-field">
+          <label class="field-label">Email</label>
+          <input type="email" id="reset-email" placeholder="you@example.com">
+        </div>
+        <button class="plan-btn full-width" onclick="handleForgotPassword()">Send reset link</button>
+      </div>
+
+      <!-- Forgot Username -->
+      <div id="forgot-username-form" style="display:none;">
+        <button class="modal-link modal-back" onclick="showView('login')">&#8592; Back to sign in</button>
+        <p class="modal-form-title">Find your username</p>
+        <p class="modal-form-desc">Enter your email and we'll look up your username.</p>
+        <div class="modal-field">
+          <label class="field-label">Email</label>
+          <input type="email" id="lookup-email" placeholder="you@example.com">
+        </div>
+        <button class="plan-btn full-width" onclick="handleForgotUsername()">Look up username</button>
+      </div>
+
+      <!-- Reset Password (shown after clicking email reset link) -->
+      <div id="reset-password-form" style="display:none;">
+        <p class="modal-form-title">Set new password</p>
+        <p class="modal-form-desc">Choose a new password for your account.</p>
+        <div class="modal-field">
+          <label class="field-label">New password</label>
+          <input type="password" id="new-password" placeholder="At least 6 characters">
+        </div>
+        <button class="plan-btn full-width" onclick="handlePasswordReset()">Update password</button>
       </div>
     </div>
   </div>

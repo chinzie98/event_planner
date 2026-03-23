@@ -19,6 +19,10 @@
     { "src": "/delete-trip/(.*)", "dest": "backend/server.js" },
     { "src": "/upgrade-premium", "dest": "backend/server.js" },
     { "src": "/user-profile/(.*)", "dest": "backend/server.js" },
+    { "src": "/check-username", "dest": "backend/server.js" },
+    { "src": "/set-username", "dest": "backend/server.js" },
+    { "src": "/resolve-username", "dest": "backend/server.js" },
+    { "src": "/forgot-username", "dest": "backend/server.js" },
     { "src": "/(.*)", "dest": "/$1" }
   ]
 }

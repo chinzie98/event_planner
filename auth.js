@@ -15,6 +15,10 @@ async function initAuth() {
   authInitialized = true;
 
   supabaseClient.auth.onAuthStateChange((_event, session) => {
+    if (_event === "PASSWORD_RECOVERY") {
+      openAuthModal("reset-password");
+      return;
+    }
     currentUser = session?.user ?? null;
     if (currentUser) {
       updateNavForUser(currentUser);
@@ -31,18 +35,18 @@ async function updateNavForUser(user) {
   const tripsLink = document.getElementById("nav-trips-link");
   const upgradeBtn = document.getElementById("nav-upgrade-btn");
 
-  if (navUser) navUser.textContent = user.email;
   if (navBtn) { navBtn.textContent = "Sign out"; navBtn.onclick = handleLogout; }
   if (tripsLink) tripsLink.style.display = "inline-flex";
 
-  if (upgradeBtn) {
-    try {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      const token = session?.access_token || null;
-      const res = await fetch(`/user-profile/${user.id}`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      const profile = await res.json();
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const token = session?.access_token || null;
+    const res = await fetch(`/user-profile/${user.id}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const profile = await res.json();
+    if (navUser) navUser.textContent = profile.username || user.email;
+    if (upgradeBtn) {
       if (!profile.is_premium) {
         upgradeBtn.style.display = "inline-flex";
         upgradeBtn.onclick = () => {
@@ -55,9 +59,9 @@ async function updateNavForUser(user) {
       } else {
         upgradeBtn.style.display = "none";
       }
-    } catch {
-      // Non-fatal — skip showing the button
     }
+  } catch {
+    if (navUser) navUser.textContent = user.email;
   }
 }
 
@@ -73,24 +77,83 @@ function updateNavForGuest() {
   if (upgradeBtn) upgradeBtn.style.display = "none";
 }
 
+// =====================
+// Sign In (username → email → Supabase)
+// =====================
 async function handleLogin() {
-  const email = document.getElementById("login-email").value.trim();
+  const username = document.getElementById("login-username").value.trim();
   const password = document.getElementById("login-password").value;
   clearAuthError();
-  if (!email || !password) return showAuthError("Please enter your email and password.");
+  if (!username || !password) return showAuthError("Please enter your username and password.");
+
+  let email;
+  try {
+    const res = await fetch("/resolve-username", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username })
+    });
+    if (res.status === 404) return showAuthError("Username not found.");
+    if (!res.ok) return showAuthError("Could not sign in. Please try again.");
+    const data = await res.json();
+    email = data.email;
+  } catch {
+    return showAuthError("Could not reach the server. Please try again.");
+  }
+
   const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
   if (error) showAuthError(error.message);
 }
 
+// =====================
+// Create Account
+// =====================
 async function handleSignup() {
+  const username = document.getElementById("signup-username").value.trim();
   const email = document.getElementById("signup-email").value.trim();
   const password = document.getElementById("signup-password").value;
   clearAuthError();
-  if (!email || !password) return showAuthError("Please fill in all fields.");
+
+  if (!username || !email || !password) return showAuthError("Please fill in all fields.");
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username))
+    return showAuthError("Username must be 3–20 characters: letters, numbers, or underscores only.");
   if (password.length < 6) return showAuthError("Password must be at least 6 characters.");
-  const { error } = await supabaseClient.auth.signUp({ email, password });
-  if (error) { showAuthError(error.message); }
-  else { showAuthError("Check your email to confirm your account!", "success"); }
+
+  // Check username availability before creating the account
+  try {
+    const checkRes = await fetch("/check-username", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username })
+    });
+    if (checkRes.status === 409) return showAuthError("Username is already taken.");
+    if (!checkRes.ok) return showAuthError("Could not verify username. Please try again.");
+  } catch {
+    return showAuthError("Could not reach the server. Please try again.");
+  }
+
+  // Create the Supabase auth account
+  const { data, error } = await supabaseClient.auth.signUp({ email, password });
+  if (error) return showAuthError(error.message);
+
+  // Store username linked to the new user ID
+  if (data.user) {
+    try {
+      const setRes = await fetch("/set-username", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: data.user.id, username })
+      });
+      if (setRes.status === 409) {
+        // Race condition — username was taken between check and set
+        return showAuthError("That username was just taken. Please choose another.");
+      }
+    } catch {
+      // Non-fatal — account created, username can be set on next sign-in
+    }
+  }
+
+  showAuthError("Check your email to confirm your account!", "success");
 }
 
 async function handleLogout() {
@@ -102,9 +165,12 @@ async function getAuthToken() {
   return session?.access_token || null;
 }
 
-function openAuthModal(tab = "login") {
+// =====================
+// Modal Navigation
+// =====================
+function openAuthModal(view = "login") {
   const modal = document.getElementById("auth-modal");
-  if (modal) { modal.classList.add("open"); switchTab(tab); clearAuthError(); }
+  if (modal) { modal.classList.add("open"); showView(view); clearAuthError(); }
 }
 
 function closeAuthModal() {
@@ -112,18 +178,85 @@ function closeAuthModal() {
   if (modal) modal.classList.remove("open");
 }
 
-function switchTab(tab) {
-  const loginForm = document.getElementById("login-form");
-  const signupForm = document.getElementById("signup-form");
-  const tabLogin = document.getElementById("tab-login");
-  const tabSignup = document.getElementById("tab-signup");
-  if (loginForm) loginForm.style.display = tab === "login" ? "block" : "none";
-  if (signupForm) signupForm.style.display = tab === "signup" ? "block" : "none";
-  if (tabLogin) tabLogin.classList.toggle("active", tab === "login");
-  if (tabSignup) tabSignup.classList.toggle("active", tab === "signup");
+function showView(view) {
+  const views = ["login", "signup", "forgot-password", "forgot-username", "reset-password"];
+  const tabs = document.getElementById("auth-tabs");
+
+  views.forEach(v => {
+    const el = document.getElementById(`${v}-form`);
+    if (el) el.style.display = "none";
+  });
   clearAuthError();
+
+  const target = document.getElementById(`${view}-form`);
+  if (target) target.style.display = "block";
+
+  // Show tabs only for the primary login/signup views
+  if (tabs) tabs.style.display = (view === "login" || view === "signup") ? "flex" : "none";
+  if (view === "login" || view === "signup") {
+    const tabLogin = document.getElementById("tab-login");
+    const tabSignup = document.getElementById("tab-signup");
+    if (tabLogin) tabLogin.classList.toggle("active", view === "login");
+    if (tabSignup) tabSignup.classList.toggle("active", view === "signup");
+  }
 }
 
+function switchTab(tab) {
+  showView(tab);
+}
+
+// =====================
+// Forgot Password
+// =====================
+async function handleForgotPassword() {
+  const email = document.getElementById("reset-email").value.trim();
+  clearAuthError();
+  if (!email) return showAuthError("Please enter your email address.");
+
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin
+  });
+  if (error) showAuthError(error.message);
+  else showAuthError("Password reset email sent! Check your inbox.", "success");
+}
+
+// =====================
+// Forgot Username
+// =====================
+async function handleForgotUsername() {
+  const email = document.getElementById("lookup-email").value.trim();
+  clearAuthError();
+  if (!email) return showAuthError("Please enter your email address.");
+
+  try {
+    const res = await fetch(`/forgot-username?email=${encodeURIComponent(email)}`);
+    const data = await res.json();
+    if (!res.ok) showAuthError("No account found with that email.");
+    else showAuthError(`Your username is: ${data.username}`, "success");
+  } catch {
+    showAuthError("Could not reach the server. Please try again.");
+  }
+}
+
+// =====================
+// Password Reset (after clicking email link)
+// =====================
+async function handlePasswordReset() {
+  const password = document.getElementById("new-password").value;
+  clearAuthError();
+  if (!password || password.length < 6) return showAuthError("Password must be at least 6 characters.");
+
+  const { error } = await supabaseClient.auth.updateUser({ password });
+  if (error) showAuthError(error.message);
+  else {
+    showAuthError("Password updated successfully!", "success");
+    setTimeout(() => closeAuthModal(), 2000);
+  }
+}
+
+// =====================
+// Error Display
+// =====================
 function showAuthError(msg, type = "error") {
   const el = document.getElementById("auth-error");
   if (el) { el.textContent = msg; el.className = `auth-error ${type}`; }
