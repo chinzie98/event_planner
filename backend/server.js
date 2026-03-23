@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { rateLimit } from "express-rate-limit";
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 
@@ -27,7 +27,7 @@ const globalLimiter = rateLimit({
 const planTripLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 15,
-  keyGenerator: (req) => req.user?.id || req.ip,
+  keyGenerator: (req) => req.user?.id || ipKeyGenerator(req),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many trip requests. Please wait before trying again." },
@@ -37,7 +37,7 @@ const planTripLimiter = rateLimit({
 const writeLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 20,
-  keyGenerator: (req) => req.user?.id || req.ip,
+  keyGenerator: (req) => req.user?.id || ipKeyGenerator(req),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests. Please try again later." },
